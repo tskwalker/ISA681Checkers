@@ -29,6 +29,9 @@ app.use(helmet.hsts({
   maxAge: sixtyDaysInSeconds
 }))
 
+// launch app server
+var server = require('http').createServer(app).listen(3000);
+
 app.use('/', indexRouter);
 app.use('/login', usersRouter);
 
