@@ -1,0 +1,24 @@
+html
+  head
+    title Login
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    script(src='/socket.io/socket.io.js')
+    script(src='javascripts/checkersClient.js')
+  body
+    div
+      h3 checkers Web Page - Registration
+    form(action='/register', method='POST')
+      div
+        label Last name:
+        input(type='text', name='lastName')
+      div
+        label First name:
+        input(type='text', name='firstName')
+      div
+        label Email:
+        input(type='text', name='email')
+      div
+        label Password
+        input(type='password', name='password')
+      button(name='Register') Register
+      

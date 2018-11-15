@@ -1,0 +1,35 @@
+extends base
+
+block body
+    h1 Welcome #{name}
+    
+    #content(style="text-align: right;float: right;")
+        -url="/logout"
+        a(href=url style='align:right') Logout
+    
+
+    p(hidden)#sEmail #{email}
+    p(hidden)#sName #{name}
+
+    #content
+        .options
+            button#createGRBtn Create Game Room
+            button#joinGRBtn Join Game Room
+            button#resumeGBtn Resume Game
+
+    p(hidden).waitMsg.
+        Wait for second Player to join.
+  
+    p(hidden).playerJoinedMsg.
+        New Player Joined.
+    p(hidden).joinRoomMsg
+        | Select a Game Room to join.
+
+    #roomList
+      .availList
+           button(hidden)#jRoomBtn Join
+
+    
+    #content
+        .checkers
+            button#startPlayBtn StartPlay
