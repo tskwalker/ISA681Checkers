@@ -14,7 +14,7 @@ var cors = require('cors');
 var morgan = require('morgan');
 var Joi = require('joi');
 const models = require('./models');
-
+const sixtyDaysInSeconds = 5184000;
 
 
 //middleware
@@ -23,6 +23,7 @@ var error = require('./middleware/error');
 var indexRouter = require('./routes/index');
 var loginRouter = require('./routes/login');
 var registerRouter = require('./routes/register');
+var gameRouter = require('./routes/checkersgame');
 
 /*var User = require('./models/users');*/
 
@@ -30,14 +31,14 @@ var registerRouter = require('./routes/register');
  * get the keys from /certificates folder
  */
 var options = {
-  key: fs.readFileSync('./bin/certificates/checkers-key.pem'),
+  key: fs.readFileSync('./bin/certificates/taylor-key.pem'),
   cert: fs.readFileSync('./bin/certificates/checkers-cert.pem'),
-  ca: [fs.readFileSync('./bin/certificates/checkers-cert.pem')]
+  ca: [fs.readFileSync('./bin/certificates/checkers-csr.pem')]
 };
 
 var app = express();
 var server = https.createServer(options, app);
-var io = require('socket.io')(server);
+var io = require('socket.io').listen(server);
 /*app.use(function(req, res, next){
   res.io = io;
   next();
@@ -70,17 +71,20 @@ app.use(session({
   },
 }))
 
+
 app.use(helmet());
 app.use(helmet.noCache());
 app.use(helmet.contentSecurityPolicy({
   directives: {
-    defaultSrc: ["'self'", 'wss://localhost:3000'],
+  defaultSrc: ["'self'", 'https://localhost:3000'],
     styleSrc: ["'self'", "'unsafe-inline'"],
+    fontSrc: ["'self'", 'https://fonts.googleapis.com/css?family=Lato:400,700'],
+    
   }, setAllHeaders: true,
 }));
 app.use(helmet.noSniff());
 app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
-var sixtyDaysInSeconds = 5184000;
+//var sixtyDaysInSeconds = 5184000;
 app.use(helmet.hsts({
   maxAge: sixtyDaysInSeconds
 }))
@@ -185,6 +189,8 @@ io.on('connection', function (socket) {
 
     //todo
     //now initialize game data and set everything ready for players to start
+    
+
   })
 
 
@@ -195,6 +201,7 @@ io.on('connection', function (socket) {
 app.use('/', indexRouter);
 app.use('/login', loginRouter);
 app.use('/register', registerRouter);
+app.use('/checkersgame', gameRouter);
 //todo
 //add logout route handler
 
