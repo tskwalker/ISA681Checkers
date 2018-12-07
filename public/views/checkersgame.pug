@@ -1,0 +1,38 @@
+html
+    head
+        title #{title}
+        link(href='https://fonts.googleapis.com/css?family=Lato:400,700', rel='stylesheet')
+        link(rel='stylesheet', href='/stylesheets/app.css')
+        link(rel='shortcut icon', href='favicon.ico', type='image/x-icon')
+        link(rel='shortcut icon', href='favicon.png', type='image/x-icon')
+        link(rel='icon', href='favicon.ico', type='image/x-icon')
+        link(rel='icon', href='favicon.png', type='image/x-icon')
+        script(src='/socket.io/socket.io.js')
+        script(src="/jquery/jquery.js")
+        script(src='javascripts/checkersClient.js')
+
+    body
+        .column
+            .info
+                h1 Checkers
+                hr
+                p
+                    | ISA 681 Checkers Game Project
+            .stats
+                h2 Game Statistics
+                .wrapper
+                    #player1
+                        h3 Player 1 (Top)
+                    #player2
+                        h3 Player 2 (Bottom)
+                .clearfix
+                .turn
+                button#cleargame Reset Game
+            .column
+                #board
+                    .tiles
+                    .pieces
+                        .player1pieces
+                        .player2pieces
+
+        

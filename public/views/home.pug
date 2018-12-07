@@ -6,6 +6,7 @@ block body
     #content(style="text-align: right;float: right;")
         -url="/logout"
         a(href=url style='align:right') Logout
+        
     
 
     p(hidden)#sEmail #{email}
@@ -16,6 +17,7 @@ block body
             button#createGRBtn Create Game Room
             button#joinGRBtn Join Game Room
             button#resumeGBtn Resume Game
+            
 
     p(hidden).waitMsg.
         Wait for second Player to join.
@@ -24,12 +26,24 @@ block body
         New Player Joined.
     p(hidden).joinRoomMsg
         | Select a Game Room to join.
+    p(hidden).startGameMsg
+        |Lets Start.
+    
+
 
     #roomList
       .availList
+           //button#jRoomBtn Join
            button(hidden)#jRoomBtn Join
 
-    
+   
     #content
         .checkers
-            button#startPlayBtn StartPlay
+            a(href="checkersgame")
+                button#startPlayBtn(type="button") StartPlay
+                
+
+
+
+   
+ 
