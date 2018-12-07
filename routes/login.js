@@ -10,6 +10,7 @@ loginRouter.get('/', function (req, res, next) {
   res.render('login', { title: 'Checkers' });
 });
 
+
 loginRouter.post('/', async (req, res) => {
 
   var login = { email: req.body.username, password: req.body.password };
