@@ -12,17 +12,25 @@ var csrf = require('csurf');
 var session = require('express-session');
 var cors = require('cors');
 var morgan = require('morgan');
-var Joi = require('joi');
+var hsts = require('hsts');
 const models = require('./models');
+const xssFilter = require('x-xss-protection');
+
 
 
 
 //middleware
 var error = require('./middleware/error');
 
+var csrfProtection = csrf({ cookie: false });
+
+
 var indexRouter = require('./routes/index');
 var loginRouter = require('./routes/login');
 var registerRouter = require('./routes/register');
+var homeRouter = require('./routes/home');
+var logoutRouter=require('./routes/logout');
+var gameRouter=require('./routes/checkersgame');
 
 /*var User = require('./models/users');*/
 
@@ -30,23 +38,36 @@ var registerRouter = require('./routes/register');
  * get the keys from /certificates folder
  */
 var options = {
-  key: fs.readFileSync('./bin/certificates/checkers-key.pem'),
-  cert: fs.readFileSync('./bin/certificates/checkers-cert.pem'),
-  ca: [fs.readFileSync('./bin/certificates/checkers-cert.pem')]
+  //testing
+//key: fs.readFileSync('./bin/certificates/newCert-key.pem'),
+  //cert: fs.readFileSync('./bin/certificates/newCert-cert.pem'),
+  //ca: [fs.readFileSync('./bin/certificates/newCert-cert.pem')],
+  rejectUnauthorized: true,
+ // key: fs.readFileSync('./bin/certificates/checkers-key.pem'),
+  ///cert: fs.readFileSync('./bin/certificates/checkers-cert.pem'),
+ // dhparam: fs.readFileSync('./bin/certificates/dhparam.pem'),
+ // ca: [fs.readFileSync('./bin/certificates/checkers-cert.pem')]
+
+ key: fs.readFileSync('./bin/certificates/localhost.key'),
+  cert: fs.readFileSync('./bin/certificates/localhost.crt'),
+  //ca: [fs.readFileSync('./bin/certificates/newCert-cert.pem')],
+
+ 
 };
+
 
 var app = express();
 var server = https.createServer(options, app);
 var io = require('socket.io')(server);
+//io.set('flash policy port', 3300)
 /*app.use(function(req, res, next){
   res.io = io;
   next();
 });*/
-
+app.set('trust proxy', 1);
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/jquery', express.static(__dirname + '/node_modules/jquery/dist/'));
@@ -66,7 +87,8 @@ app.use(session({
   cookie: {
     maxAge: 600000,
     secure: true,
-    httpOnly: true
+    httpOnly: true,
+    domain:'localhost'
   },
 }))
 
@@ -74,16 +96,25 @@ app.use(helmet());
 app.use(helmet.noCache());
 app.use(helmet.contentSecurityPolicy({
   directives: {
-    defaultSrc: ["'self'", 'wss://localhost:3000'],
+    defaultSrc: ["'self'", 'wss://localhost:3001'],
     styleSrc: ["'self'", "'unsafe-inline'"],
   }, setAllHeaders: true,
 }));
 app.use(helmet.noSniff());
 app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
+app.use(helmet.frameguard({ action: 'sameorigin' }));
 var sixtyDaysInSeconds = 5184000;
-app.use(helmet.hsts({
-  maxAge: sixtyDaysInSeconds
+app.use(hsts({
+  maxAge: sixtyDaysInSeconds,
+  includeSubDomains:true,
+  preload:true
 }))
+
+app.use(xssFilter());
+app.use(xssFilter({ setOnOldIE: true }));
+
+//app.use(cookieParser());
+app.use(csrfProtection);
 
 //app.use(socketIO);
 //sockets
@@ -95,6 +126,7 @@ var globalStats = [];
 io.on('connection', function (socket) {
   console.log('A player connected', socket.id);
 
+  io.sockets.connected[socket.id].emit('takeStats', globalStats);
   socket.on('disconnect', function () {
     setTimeout(function () {
       console.log("User " + socket.id + " disconnected!");
@@ -125,7 +157,7 @@ io.on('connection', function (socket) {
     //db insert for above logic
 
     var game = {
-      game_id: thisGameId,
+      gameId: thisGameId,
       player1_id: email,
       player2_id: '',
       status: 'waiting'
@@ -134,7 +166,7 @@ io.on('connection', function (socket) {
       const gameRoom = await models.Game.create(game);
       if (gameRoom) {
         socket.emit('newGameRoomCreated', { 'gRoomId': thisGameId, 'mySocketId': socket.id, 'numPlayersInRoom': 1 });
-        console.log('GameRoomCreated: ' + thisGameId + " user email: ");
+        console.log('GameRoomCreated: ' + thisGameId + " user email: ",email);
       }
 
     } catch (err) {
@@ -166,12 +198,12 @@ io.on('connection', function (socket) {
 
     try {
       const gRoomUpdate = await models.Game.update({ player2_id: newPlayer.email, status: "ready" }, {
-        where: { game_id: playerInfo.gRoomId }
+        where: { gameId: playerInfo.gRoomId }
       });
 
       if (gRoomUpdate) {
         socket.emit('joinedRoom', playerInfo);
-        const getRoomInfo = await models.Game.findOne({ where: { game_id: roomId } });
+        const getRoomInfo = await models.Game.findOne({ where: { gameId: roomId } });
         if (getRoomInfo)
           io.to(roomId).emit('startCheckers', getRoomInfo.dataValues);
       }
@@ -182,25 +214,62 @@ io.on('connection', function (socket) {
 
     }
 
+  });
 
-    //todo
-    //now initialize game data and set everything ready for players to start
+
+  socket.on('moveTo', async(moveSrcDest)=>{
+    console.log(moveSrcDest);
+    io.sockets.emit('moved',{move:moveSrcDest});
+
   })
+  socket.on('move',async(moveData)=>{
+    console.log(moveData);
+    const email = moveData.email;
+    const roomId=moveData.roomId;
+    var gameMove = {
+      gameId:moveData.roomId,
+      player:email,
+      src:moveData.tile,
+      dest:moveData.position
+    }
+    
+    io.sockets.emit('moved',{tile:moveData.tile,piece:moveData.piece,board:moveData.board})
+    
+    try{
+
+      console.log('updating Game....');
+      const gameData = await models.Game.update({status:"playing"}, {
+        where :{gameId:roomId}
+      });
+
+      if(gameData){
+        console.log('updating game moves');
+/*
+        const gameMoves = await models.GameMove.create(gameMove);
+        if(gameMoves){
+          console.log('Moves Added..')
+        }*/
+      }
+    }catch(err){
+
+    }
+    
+  })
+  
 
 
 });
 
-
-
 app.use('/', indexRouter);
 app.use('/login', loginRouter);
 app.use('/register', registerRouter);
-//todo
-//add logout route handler
+app.use('/home',homeRouter);
+app.use('/logout',logoutRouter);
+app.use('/checkersGame',gameRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404));
+  next();
 });
 
 app.use(error);

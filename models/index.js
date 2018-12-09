@@ -15,6 +15,10 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
+const schema = sequelize.createSchema(config.database);
+schema.then(()=>{
+  console.log('schema created successfully',config.database);
+})
 fs
   .readdirSync(__dirname)
   .filter(file => {
