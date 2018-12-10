@@ -2,13 +2,14 @@
 const Joi = require('joi');
 module.exports = (sequelize, DataTypes) => {
   const Game = sequelize.define('Game', {
-    game_id: {
+    gameId: {
       type:DataTypes.INTEGER,
       primaryKey:true
     },
     player1_id: DataTypes.STRING,
     player2_id: DataTypes.STRING,
-    status: DataTypes.STRING
+    status: DataTypes.STRING,
+    result:DataTypes.STRING
   }, {
     timestamps:false
   });
@@ -16,10 +17,11 @@ module.exports = (sequelize, DataTypes) => {
 
   Game.validate = function(gameInfo){
     var schema={
-      game_id:Joi.INTEGER.required(),
+      gameId:Joi.INTEGER.required(),
       player1_id:Joi.string().email(),
       player2_id:Joi.string().email(),
-      status:Joi.string().required()
+      status:Joi.string().required(),
+      result:Joi.string().required()
     }
     return Joi.validate(gameInfo,schema);
 

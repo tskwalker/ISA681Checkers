@@ -5,13 +5,34 @@ const bcrypt = require('bcrypt');
 
 
 /* GET login page. */
-loginRouter.get('/', function (req, res, next) {
+loginRouter.get('/', async (req, res, next)=> {
+  console.log(req,' user logged in..');
+  if(req.session && req.session.email){
+    
 
-  res.render('login', { title: 'Checkers' });
+    let player = await models.Player.findOne({ where: { email: req.session.email } });
+    if(player){
+      res.locals.email=player.dataValues.email;
+      res.locals.name = player.dataValues.firstName + " " + player.dataValues.lastName;
+
+      res.redirect('/home');
+
+    }else{
+      req.session.destroy();
+      res.render('login', { title: 'Checkers',csrfToken: req.csrfToken() });
+
+    }
+
+    
+  }else{
+    res.render('login', { title: 'Checkers',csrfToken: req.csrfToken() });
+  }
+  
 });
 
 loginRouter.post('/', async (req, res) => {
 
+  
   var login = { email: req.body.username, password: req.body.password };
   const { error } = models.Player.validateLogin(login);
   if (error) return res.status(400).send(error.details[0].message);
@@ -22,18 +43,18 @@ loginRouter.post('/', async (req, res) => {
     const match = await bcrypt.compare(req.body.password, player.dataValues.password);
     if (match) {
 
-      res.render('home', {
-        title: 'Home Page',
-        name:player.dataValues.firstName + " " + player.dataValues.lastName,
-        email: player.dataValues.email
-      });
+      const name=player.dataValues.firstName + " " + player.dataValues.lastName;
+      req.session.email=req.body.username;
+      req.session.name=name;
+      console.log('post login: ',req.session);
+      res.redirect('/home');
       //res.send('password verified successfully')
     }
     else
-      res.send('Invalid username or password');
+      res.render('login',{error:'Invalid username or password',csrfToken: req.csrfToken()});
 
   } else {
-    res.send("Invalid email or password");
+    res.render('login',{error:'Invalid username or password',csrfToken: req.csrfToken()});
     
   }
 

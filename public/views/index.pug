@@ -2,11 +2,15 @@ extends base.pug
 
 block body 
     h1 Welcome to checkers Web Page
-
-   
+    
+    .logoutDiv
+        if(logout)
+            p #{logout}
     p Returining user <a href="/login"> Login here: </a>
     
     p New User  <a href="/register">Register here:</a>
+
+    
 
 
 

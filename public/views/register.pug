@@ -1,13 +1,20 @@
 html
   head
-    title Login
-    link(rel='stylesheet', href='/stylesheets/style.css')
+    title Registration
     script(src='/socket.io/socket.io.js')
     script(src='javascripts/checkersClient.js')
   body
     div
       h3 checkers Web Page - Registration
-    form(action='/register', method='POST')
+
+    .errorDiv
+      if(error)
+          for err in error
+            p #{err}
+      if(userError)
+        p #{error}
+
+    form(action='/register', method='POST' autocomplete="off")
       div
         label Last name:
         input(type='text', name='lastName')
@@ -19,6 +26,8 @@ html
         input(type='text', name='email')
       div
         label Password
-        input(type='password', name='password')
+        input(type='password', name='password',autocomplete='off')
+
+      input(type='hidden' name='_csrf' value= csrfToken)
       button(name='Register') Register
       
