@@ -1,5 +1,6 @@
 'use strict';
 const Joi = require('joi');
+
 module.exports = (sequelize, DataTypes) => {
   const Game = sequelize.define('Game', {
     game_id: {
@@ -36,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Game.associate = function(models) {
     // associations can be defined here
+   
   };
   return Game;
 };
