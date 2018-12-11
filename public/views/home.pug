@@ -1,49 +1,87 @@
-extends base
-
-block body
-    h1 Welcome #{name}
+html
+    head
+        title #{title}
+        link(href='https://fonts.googleapis.com/css?family=Lato:400,700', rel='stylesheet')
+        link(rel='stylesheet', href='/stylesheets/app.css')
+        link(rel='shortcut icon', href='favicon.ico', type='image/x-icon')
+        link(rel='shortcut icon', href='favicon.png', type='image/x-icon')
+        link(rel='icon', href='favicon.ico', type='image/x-icon')
+        link(rel='icon', href='favicon.png', type='image/x-icon')
+        script(src='/socket.io/socket.io.js')
+        script(src="/jquery/jquery.js")
+        script(src='javascripts/checkersClient.js')
+        script(src='javascripts/checkersValidation.js')
+    body
+     h1 Welcome #{name}
     
     #content(style="text-align: right;float: right;")
         -url="/logout"
         a(href=url style='align:right') Logout
-        
     
-
+    // pulled from login page
     p(hidden)#sEmail #{email}
     p(hidden)#sName #{name}
+    p(hidden)#pId #{playerId}
 
     #content
         .options
             button#createGRBtn Create Game Room
             button#joinGRBtn Join Game Room
             button#resumeGBtn Resume Game
-            
 
     p(hidden).waitMsg.
-        Wait for second Player to join.
+        Waiting for second Player
   
     p(hidden).playerJoinedMsg.
         New Player Joined.
     p(hidden).joinRoomMsg
         | Select a Game Room to join.
-    p(hidden).startGameMsg
-        |Lets Start.
-    
-
 
     #roomList
       .availList
-           //button#jRoomBtn Join
            button(hidden)#jRoomBtn Join
 
-   
     #content
         .checkers
-            a(href="checkersgame")
-                button#startPlayBtn(type="button") StartPlay
+            button#startPlayBtn(type="button") StartPlay
+            //a(href="/checkersGame")
+
                 
 
 
+    
+    .column
+            .info
+                h1 Checkers
+                hr
+                p
+                    | ISA 681 Checkers Game Project
+                #iam #{name}
+                
+                
+                
+            .stats
+                h2 Game Room Information 
+                p Game Room : 
+                    #gameRoom  #{gameRoom}
+                .wrapper
+                    #player1
+                        h3 Player 1 (Top)
+                        #player1Id #{player1}
+                        //#pId #{}
+                    #player2
+                        h3 Player 2 (Bottom)
+                        #player2Id #{player2}
+                .clearfix
+                .turn
+                button#pausegame Pause Game
+            .column
+                #board
+                    .tiles
+                    .pieces
+                        .player1pieces
+                        .player2pieces
+            .hiddens
+                p(hidden)#myEmail #{my_email}
 
-   
- 
+
