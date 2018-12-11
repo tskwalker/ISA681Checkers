@@ -9,7 +9,7 @@ html, body {
   color: #333333;
   font-family: "Lato", Calibri, sans-serif;
   font-size: 16px;
-  background-color: #3A3042; }
+  background-color: rgb(128, 122, 133); }
   html h2, body h2 {
     font-size: 1.3em; }
   html h3, body h3 {
@@ -28,16 +28,17 @@ html, body {
   html .clearfix, body .clearfix {
     clear: both; }
 
-div.column {
-  position: relative;
+/*div.column {
+  position: absolute;
   float: left;
   overflow: auto;
   height: 100%;
   min-height: 100%;
-  width: 50%; }
+  width: 50%; }*/
 
 @media screen and (max-width: 1000px) {
   div.column {
+    position: relative;
     width: 100% !important;
     overflow: hidden;
     height: auto; } }
@@ -62,11 +63,11 @@ div.stats {
     bottom: 10px;
     width: 50%;
     float: left;
-    background-color: #B93848;
+    background-color: #BE3F4E;
     box-sizing: border-box;
     padding: 0 15px 20px;
     border-top-left-radius: 3px;
-    color: #232621; }
+    color: #000; }
     div.stats #player1 .capturedPiece {
       width: 2.4vmin;
       height: 2.4vmin;
@@ -84,11 +85,11 @@ div.stats {
     display: inline-block;
     width: 50%;
     float: left;
-    background-color: #232621;
+    background-color: #83838d;
     box-sizing: border-box;
     padding: 0 15px 20px;
     border-top-right-radius: 3px;
-    color: #B93848; }
+    color: #000; }
     div.stats #player2 .capturedPiece {
       width: 2.4vmin;
       height: 2.4vmin;
@@ -104,9 +105,9 @@ div.stats {
   div.stats div.turn {
     height: 10px;
     width: 100%;
-    background: linear-gradient(to right, #BEEE62 50%, transparent 50%);
+    background: linear-gradient(to right, #F8DB18 50%, transparent 50%);
     border-radius: 0 0 3px 3px; }
-  div.stats button#cleargame {
+  div.stats button#pausegame {
     display: block;
     border: 0;
     color: #F1F1FF;
@@ -114,22 +115,23 @@ div.stats {
     cursor: pointer;
     margin: 20px auto 10px;
     padding: 10px;
-    background-color: #16A8C7;
+    background-color: #AD3A48;
     box-shadow: 1px 1px 3px #232621;
     transition: background-color 0.15s linear; }
-    div.stats button#cleargame:hover {
-      background-color: #0c5a6b; }
+    div.stats button#pausegame:hover {
+      background-color: #050505; }
 
 div#board {
-  position: absolute;
-  top: calc(50% - 40vmin);
+  position: relative;
+  top: calc(50% - 10vmin);
   left: calc(50% - 40vmin);
+  display: block;
   float: left;
   width: 80vmin;
   height: 80vmin;
   border-radius: 5px;
   box-shadow: 1px 1px 3px #232621;
-  background-color: #B93848;
+  background-color: #AD3A48;
   overflow: hidden; }
   div#board .tile {
     width: 10vmin;
@@ -158,7 +160,7 @@ div#board {
     position: absolute;
     width: 8vmin;
     height: 8vmin;
-    background-color: #F1F1FF;
+    background-color: #F3F3FF;
     background-size: 65%;
     background-repeat: no-repeat;
     background-position: center;
@@ -169,7 +171,7 @@ div#board {
     margin-top: 1vmin;
     margin-left: 1vmin;
     cursor: pointer;
-    border: 1vmin solid #8b8bff; }
+    border: 1vmin solid #83838d; }
     div#board .player2pieces .piece.selected {
       box-shadow: 0 0 10px 5px #16A8C7; }
 
