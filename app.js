@@ -1,5 +1,6 @@
 require('express-async-errors');
 var express = require('express');
+var pause = require('pause');
 const helmet = require('helmet');
 var path = require('path');
 var fs = require('fs');
@@ -23,6 +24,8 @@ var error = require('./middleware/error');
 var indexRouter = require('./routes/index');
 var loginRouter = require('./routes/login');
 var registerRouter = require('./routes/register');
+var homeRouter = require('./routes/home');
+var logoutRouter=require('./routes/logout');
 var gameRouter = require('./routes/checkersgame');
 
 /*var User = require('./models/users');*/
@@ -95,9 +98,21 @@ app.use(helmet.hsts({
 //Socket Events
 var AllGames = {};
 var globalStats = [];
+//var players{};
 
 io.on('connection', function (socket) {
   console.log('A player connected', socket.id);
+  /*
+  // create a new player and add it to our players object
+  players[socket.id] = {
+    rotation: 0,
+    x: Math.floor(Math.random() * 700) + 50,
+    y: Math.floor(Math.random() * 500) + 50,
+    playerId: socket.id,
+    team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
+  };
+  // send the players object to the new player
+  socket.emit('currentPlayers', players);*/
 
   socket.on('disconnect', function () {
     setTimeout(function () {
@@ -117,10 +132,11 @@ io.on('connection', function (socket) {
     console.log('received :', data);
   })
 
-  //create gameroom
+  //create gameroom ID
   socket.on('createGameRoom', async function (data) {
     var thisGameId = (Math.random() * 100000) | 0;
     var email = data.email;
+    var playerNumber = 1;
 
     socket.join(thisGameId.toString());
     //var numPlayersInRoom = 1;
@@ -131,14 +147,18 @@ io.on('connection', function (socket) {
     var game = {
       game_id: thisGameId,
       player1_id: email,
+      //player2_id: mySocketId,
+      //player2_id: email,
       player2_id: '',
-      status: 'waiting'
+      status: 'waiting',
+      //playerOne: playerNumber
     };
     try {
       const gameRoom = await models.Game.create(game);
       if (gameRoom) {
-        socket.emit('newGameRoomCreated', { 'gRoomId': thisGameId, 'mySocketId': socket.id, 'numPlayersInRoom': 1 });
-        console.log('GameRoomCreated: ' + thisGameId + " user email: ");
+        socket.emit('newGameRoomCreated', { 'gRoomId': thisGameId, 'mySocketId': socket.id, 'pEmail': email, 'numPlayersInRoom': 1 });
+        console.log('GameRoomCreated: ' + thisGameId + " user email: " + email);
+        //window.alert('Welcome, ' + email + ' Your game room number is:' + thisGameId + ' and you are player 1');
       }
 
     } catch (err) {
@@ -157,14 +177,17 @@ io.on('connection', function (socket) {
     var playerInfo = {
       gRoomId: newPlayer.gRoomId,
       mySocketId: socket.id,
-      numPlayersInRoom: 2
+      numPlayersInRoom: 2,
+      //play1Id: 1,
+      //play2Id: 2
     }
 
+    
     var roomId = playerInfo.gRoomId;
     socket.join(roomId);
     AllGames[playerInfo.gRoomId] = 2;
+    
     //now update db
-
     const { error } = models.Game.validateEmail({ player2_id: newPlayer.email });
     if (error) socket.emit('error', { message: 'Invalid player Email Received' })
 
@@ -180,16 +203,82 @@ io.on('connection', function (socket) {
           io.to(roomId).emit('startCheckers', getRoomInfo.dataValues);
       }
 
-    } catch (err) {
+    } 
+    
+    catch (err) {
       console.log(err);
       socket.emit('error', err);
 
     }
 
-
     //todo
     //now initialize game data and set everything ready for players to start
+    /**
+       * Handle the turn played by either player and notify the other.
+       */
+    /*socket.on('playTurn', (data) => {
+      socket.broadcast.to(data.roomId).emit('turnPlayed', {
+        tile: data.tile,
+        room: gRoomId
+      });
+    });*/
+    //socket.on('userId',function(data){
+      //var user = data.id ;
+      //console.log('GameRoomCreated: ' + thisGameId + " user email: ");
+      //Add user to a list and consolidate or whatever //
+    //});
+
+    // when the client emits 'typing', we broadcast it to others
+    /*socket.on('typing', function () {
+      socket.broadcast.emit('typing', {
+      username: socket.username
+    });*/
+  })
+
+  socket.on('moveTo', async(moveSrcDest)=>{
+    console.log(moveSrcDest);
+    io.sockets.emit('moved',{move:moveSrcDest});
+
+  })
+
+
+  socket.on('move',async(moveData)=>{
+    console.log(moveData);
+    const email = moveData.email;
+    const roomId=moveData.roomId;
+    var gameMove = {
+      gameId:moveData.roomId,
+      player:email,
+      src:moveData.tile,
+      dest:moveData.position
+    }
     
+    io.sockets.emit('moved',{tile:moveData.tile,piece:moveData.piece,board:moveData.board})
+    
+    try{
+
+      console.log('updating Game....');
+      const gameData = await models.Game.update({status:"playing"}, {
+        where :{gameId:roomId}
+      });
+
+      if(gameData){
+        console.log('updating game moves');
+/*      
+        const gameMoves = await models.GameMove.create(gameMove);
+        if(gameMoves){
+          console.log('Moves Added..')
+        }*/
+      }
+    }catch(err){
+
+    }
+    
+  })
+
+  socket.on('paused',()=>{
+    console.log('User has paused the game');
+    io.sockets.emit('pause');
 
   })
 
@@ -201,13 +290,13 @@ io.on('connection', function (socket) {
 app.use('/', indexRouter);
 app.use('/login', loginRouter);
 app.use('/register', registerRouter);
-app.use('/checkersgame', gameRouter);
-//todo
-//add logout route handler
+app.use('/home',homeRouter);
+app.use('/logout',logoutRouter);
+app.use('/checkersGame',gameRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404));
+  next();
 });
 
 app.use(error);
