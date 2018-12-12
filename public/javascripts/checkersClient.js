@@ -422,7 +422,7 @@ $(function () {
       //change the active player - also changes div.turn's CSS
       changePlayerTurn: function () {
         if(this.playerTurn == 1) {
-          $(".piece").removeClass('selected');
+          $(".player2pieces").removeClass('selected');
           this.playerTurn = 2;
           //if(this.playerTurn == 2){
             //$(".piece").removeClass('selected');
@@ -431,7 +431,7 @@ $(function () {
           return;
         }
         if(this.playerTurn == 2) {
-          $(".piece").removeClass('selected');
+          $(".player1pieces").removeClass('selected');
           this.playerTurn = 1
           //if(this.playerTurn == 1){
             //$(".piece").removeClass('selected');
@@ -439,10 +439,20 @@ $(function () {
           $('.turn').css("background", "linear-gradient(to right, #BEEE62 50%, transparent 50%)");
         }
       },
+
+      checkifAnybodyWon: function () {
+        if(this.score.player1 == 12) {
+          return 1;
+        } else if(this.score.player2 == 12) {
+          return 2;
+        } return false;
+  },
       //reset the game
       pause: function () {
           //location.pause();
-          window.alert('The game has been paused');
+          setTimeout(function(){ 
+            window.alert('The game has been paused'); }, 1000);
+          //window.alert('The game has been paused');
         //pause(4000);
         //var c = window.confirm("The game has been paused, please click okay to resume");
         //if (c) alert("Resuming game, click ok");
