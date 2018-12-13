@@ -31,6 +31,11 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+    }).then(() => {
+      queryInterface.addConstraint('GameMove',['gameId','moveNum','player'],{
+        type: 'primary key',
+        name: 'game_move_primary_key'
+      })
     });
   },
   down: (queryInterface, Sequelize) => {

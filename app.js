@@ -29,8 +29,8 @@ var indexRouter = require('./routes/index');
 var loginRouter = require('./routes/login');
 var registerRouter = require('./routes/register');
 var homeRouter = require('./routes/home');
-var logoutRouter=require('./routes/logout');
-var gameRouter=require('./routes/checkersgame');
+var logoutRouter = require('./routes/logout');
+var gameRouter = require('./routes/checkersgame');
 
 /*var User = require('./models/users');*/
 
@@ -39,31 +39,26 @@ var gameRouter=require('./routes/checkersgame');
  */
 var options = {
   //testing
-//key: fs.readFileSync('./bin/certificates/newCert-key.pem'),
+  //key: fs.readFileSync('./bin/certificates/newCert-key.pem'),
   //cert: fs.readFileSync('./bin/certificates/newCert-cert.pem'),
   //ca: [fs.readFileSync('./bin/certificates/newCert-cert.pem')],
   rejectUnauthorized: true,
- // key: fs.readFileSync('./bin/certificates/checkers-key.pem'),
+  // key: fs.readFileSync('./bin/certificates/checkers-key.pem'),
   ///cert: fs.readFileSync('./bin/certificates/checkers-cert.pem'),
- // dhparam: fs.readFileSync('./bin/certificates/dhparam.pem'),
- // ca: [fs.readFileSync('./bin/certificates/checkers-cert.pem')]
+  // dhparam: fs.readFileSync('./bin/certificates/dhparam.pem'),
+  // ca: [fs.readFileSync('./bin/certificates/checkers-cert.pem')]
 
- key: fs.readFileSync('./bin/certificates/localhost.key'),
+  key: fs.readFileSync('./bin/certificates/localhost.key'),
   cert: fs.readFileSync('./bin/certificates/localhost.crt'),
   //ca: [fs.readFileSync('./bin/certificates/newCert-cert.pem')],
 
- 
+
 };
 
 
 var app = express();
 var server = https.createServer(options, app);
 var io = require('socket.io')(server);
-//io.set('flash policy port', 3300)
-/*app.use(function(req, res, next){
-  res.io = io;
-  next();
-});*/
 app.set('trust proxy', 1);
 app.use(logger('dev'));
 app.use(express.json());
@@ -88,7 +83,7 @@ app.use(session({
     maxAge: 600000,
     secure: true,
     httpOnly: true,
-    domain:'localhost'
+    domain: 'localhost'
   },
 }))
 
@@ -98,22 +93,23 @@ app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'", 'wss://localhost:3001'],
     styleSrc: ["'self'", "'unsafe-inline'"],
+    scriptSrc: ["'self'"]
   }, setAllHeaders: true,
 }));
 app.use(helmet.noSniff());
 app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
 app.use(helmet.frameguard({ action: 'sameorigin' }));
-var sixtyDaysInSeconds = 5184000;
+var oneYearInSeconds = 31536000;
 app.use(hsts({
-  maxAge: sixtyDaysInSeconds,
-  includeSubDomains:true,
-  preload:true
+  maxAge: oneYearInSeconds,
+  includeSubDomains: true,
+  preload: true
 }))
 
 app.use(xssFilter());
 app.use(xssFilter({ setOnOldIE: true }));
 
-//app.use(cookieParser());
+
 app.use(csrfProtection);
 
 //app.use(socketIO);
@@ -122,6 +118,7 @@ app.use(csrfProtection);
 //Socket Events
 var AllGames = {};
 var globalStats = [];
+
 
 io.on('connection', function (socket) {
   console.log('A player connected', socket.id);
@@ -139,11 +136,6 @@ io.on('connection', function (socket) {
   Object.keys(io.sockets.sockets).forEach(function (id) {
     console.log("ID: ", id);
   });
-
-  socket.emit('message', { 'inital ': 'message from server' });
-  socket.on('received', (data) => {
-    console.log('received :', data);
-  })
 
   //create gameroom
   socket.on('createGameRoom', async function (data) {
@@ -166,7 +158,7 @@ io.on('connection', function (socket) {
       const gameRoom = await models.Game.create(game);
       if (gameRoom) {
         socket.emit('newGameRoomCreated', { 'gRoomId': thisGameId, 'mySocketId': socket.id, 'numPlayersInRoom': 1 });
-        console.log('GameRoomCreated: ' + thisGameId + " user email: ",email);
+        console.log('GameRoomCreated: ' + thisGameId + " user email: ", email);
       }
 
     } catch (err) {
@@ -217,45 +209,109 @@ io.on('connection', function (socket) {
   });
 
 
-  socket.on('moveTo', async(moveSrcDest)=>{
-    console.log(moveSrcDest);
-    io.sockets.emit('moved',{move:moveSrcDest});
+  socket.on('moveTo', async (moveSrcDest) => {
 
-  })
-  socket.on('move',async(moveData)=>{
-    console.log(moveData);
-    const email = moveData.email;
-    const roomId=moveData.roomId;
+    var currentMove = moveSrcDest.PlayerMove;
+    //console.log(currentMove);
     var gameMove = {
-      gameId:moveData.roomId,
-      player:email,
-      src:moveData.tile,
-      dest:moveData.position
+      gameId: currentMove.roomId,
+      moveNum: currentMove.roundCount,
+      player: currentMove.playerEmail,
+      src: currentMove.src,
+      dest: currentMove.dest
     }
-    
-    io.sockets.emit('moved',{tile:moveData.tile,piece:moveData.piece,board:moveData.board})
-    
-    try{
 
-      console.log('updating Game....');
-      const gameData = await models.Game.update({status:"playing"}, {
-        where :{gameId:roomId}
+    console.log('Game set to playing..');
+
+    const { error } = models.GameMove.validate(gameMove);
+    if (error) socket.emit('error', { message: 'Invalid Move' });
+    gameMove.src = currentMove.src.toString();
+    gameMove.dest = currentMove.dest.toString();
+
+    const gameMovesToDB = await models.GameMove.create(gameMove);
+    if (gameMovesToDB) {
+      io.sockets.emit('moved', { move: moveSrcDest });
+    }
+    //}
+  })
+  socket.on('end', async (data) => {
+    console.log(data);
+    var game = data.Game;
+
+
+
+    //update Game table. set status as completed and add the winner email id.
+    const gameData = await models.Game.update({ status: game.status, result: game.winner }, {
+      where: { gameId: game.roomId }
+    });
+
+    if (gameData) {
+      console.log('Updated result in DB.');
+      console.log('Fetching moves..')
+      const player1Moves = await models.GameMove.findAll({
+        where: {
+          player: game.player1Email,
+          gameId: game.roomId
+        }
       });
 
-      if(gameData){
-        console.log('updating game moves');
-/*
-        const gameMoves = await models.GameMove.create(gameMove);
-        if(gameMoves){
-          console.log('Moves Added..')
-        }*/
+      const player2Moves = await models.GameMove.findAll({
+        where: {
+          player: game.player2Email,
+          gameId: game.roomId
+        }
+      });
+
+      console.log(player1Moves[0].dataValues);
+      console.log(player2Moves[0].dataValues);
+      io.sockets.emit('currentGameMoves', { player1: player1Moves[0].dataValues, player2: player2Moves[0].dataValues });
+    }
+
+  })
+
+  //get moves for game
+  socket.on('getGameMoves', async (data) => {
+    
+
+  })
+
+  //get completed games history with winner.
+  socket.on('gameHistory', async (data) => {
+    var gameHistory = [];
+    try {
+      let stat = await models.Game.findAll({ where: { status: 'completed' } });
+      if (stat) {
+        stat.forEach(Game => {
+          gameHistory.push(Game.get({ plain: true }));
+        })
+        socket.emit('gameHistoryFromServer', gameHistory);
       }
-    }catch(err){
+
+    } catch (err) {
 
     }
-    
   })
-  
+
+  //get all completed game moves;
+  //get a room id from server and get the moves for play in that room 
+  socket.on('getCompletedGameMoves', async (data) => {
+    var gameMoves = [];
+    try {
+      const moves = await models.GameMove.findAll({
+        where: {
+          gameId: data.roomId
+        }
+      })
+      if (moves)
+        moves.forEach(GameMove => {
+          gameMoves.push(GameMove.get({ plain: true }));
+        })
+      socket.emit('gameMoves', gameMoves);
+
+    } catch (err) {
+    }
+  })
+
 
 
 });
@@ -263,9 +319,9 @@ io.on('connection', function (socket) {
 app.use('/', indexRouter);
 app.use('/login', loginRouter);
 app.use('/register', registerRouter);
-app.use('/home',homeRouter);
-app.use('/logout',logoutRouter);
-app.use('/checkersGame',gameRouter)
+app.use('/home', homeRouter);
+app.use('/logout', logoutRouter);
+app.use('/checkersGame', gameRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -1,15 +1,19 @@
 'use strict';
+const Joi = require('joi');
 module.exports = (sequelize, DataTypes) => {
   const GameMove = sequelize.define('GameMove', {
     gameId:{
       type:DataTypes.INTEGER,
-      primaryKey:true
+      primaryKey: true
     } ,
     moveNum: {
       type:DataTypes.INTEGER,
-      autoincrement:true
+      primaryKey: true
     },
-    player: DataTypes.STRING,
+    player: {
+      type: DataTypes.STRING,
+      primaryKey: true
+    },
     src: DataTypes.STRING,
     dest: DataTypes.STRING
   }, {
@@ -19,5 +23,16 @@ module.exports = (sequelize, DataTypes) => {
   GameMove.associate = function(models) {
     // associations can be defined here
   };
+
+  GameMove.validate = function(move){
+    var schema={
+      gameId:Joi.number().required(),
+      moveNum:Joi.number().required(),
+      player:Joi.string().email().required(),
+      src:Joi.array().items(Joi.number(),Joi.number()).length(2).required(),
+      dest:Joi.array().items(Joi.number(),Joi.number()).length(2).required()
+    }
+    return Joi.validate(move,schema);
+  }
   return GameMove;
 };
