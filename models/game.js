@@ -1,15 +1,15 @@
 'use strict';
 const Joi = require('joi');
+
 module.exports = (sequelize, DataTypes) => {
   const Game = sequelize.define('Game', {
-    gameId: {
+    game_id: {
       type:DataTypes.INTEGER,
       primaryKey:true
     },
     player1_id: DataTypes.STRING,
     player2_id: DataTypes.STRING,
-    status: DataTypes.STRING,
-    result:DataTypes.STRING
+    status: DataTypes.STRING
   }, {
     timestamps:false
   });
@@ -17,11 +17,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Game.validate = function(gameInfo){
     var schema={
-      gameId:Joi.INTEGER.required(),
+      game_id:Joi.INTEGER.required(),
       player1_id:Joi.string().email(),
       player2_id:Joi.string().email(),
-      status:Joi.string().required(),
-      result:Joi.string().required()
+      status:Joi.string().required()
     }
     return Joi.validate(gameInfo,schema);
 
@@ -38,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Game.associate = function(models) {
     // associations can be defined here
+   
   };
   return Game;
 };

@@ -5,34 +5,17 @@ const bcrypt = require('bcrypt');
 
 
 /* GET login page. */
-loginRouter.get('/', async (req, res, next)=> {
-  console.log(req,' user logged in..');
-  if(req.session && req.session.email){
-    
+loginRouter.get('/', function (req, res, next) {
 
-    let player = await models.Player.findOne({ where: { email: req.session.email } });
-    if(player){
-      res.locals.email=player.dataValues.email;
-      res.locals.name = player.dataValues.firstName + " " + player.dataValues.lastName;
-
-      res.redirect('/home');
-
-    }else{
-      req.session.destroy();
-      res.render('login', { title: 'Checkers',csrfToken: req.csrfToken() });
-
-    }
-
-    
-  }else{
-    res.render('login', { title: 'Checkers',csrfToken: req.csrfToken() });
-  }
-  
+  res.render('login', { title: 'Checkers' });
 });
 
-loginRouter.post('/', async (req, res) => {
 
-  
+loginRouter.post('/', async (req, res) => {
+  //var playerId = (Math.random() * 100000) | 0;
+  var playerId = 1;
+  //var pId = (Math.random() * 2) | 0;
+
   var login = { email: req.body.username, password: req.body.password };
   const { error } = models.Player.validateLogin(login);
   if (error) return res.status(400).send(error.details[0].message);
@@ -40,21 +23,23 @@ loginRouter.post('/', async (req, res) => {
   let player = await models.Player.findOne({ where: { email: req.body.username } });
   if (player) {
     //console.log(player.dataValues);
+    //var playerId = (Math.random() * 100000) | 0;
     const match = await bcrypt.compare(req.body.password, player.dataValues.password);
     if (match) {
 
-      const name=player.dataValues.firstName + " " + player.dataValues.lastName;
-      req.session.email=req.body.username;
-      req.session.name=name;
-      console.log('post login: ',req.session);
-      res.redirect('/home');
+      res.render('home', {
+        title: 'Home Page',
+        name:player.dataValues.firstName + " " + player.dataValues.lastName,
+        email: player.dataValues.email,
+        pId: playerId
+      });
       //res.send('password verified successfully')
     }
     else
-      res.render('login',{error:'Invalid username or password',csrfToken: req.csrfToken()});
+      res.send('Invalid username or password');
 
   } else {
-    res.render('login',{error:'Invalid username or password',csrfToken: req.csrfToken()});
+    res.send("Invalid email or password");
     
   }
 
