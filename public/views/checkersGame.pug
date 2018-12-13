@@ -10,7 +10,6 @@ html
         script(src='/socket.io/socket.io.js')
         script(src="/jquery/jquery.js")
         script(src='javascripts/checkersClient.js')
-        script(src='javascripts/checkersValidation.js')
 
     body
         .column
@@ -19,29 +18,21 @@ html
                 hr
                 p
                     | ISA 681 Checkers Game Project
-                #iam #{name}
-                
-                
-                
             .stats
-                h2 Game Statistics 
-                p Game Room : 
-                    #gameRoom  #{gameRoom}
+                h2 Game Statistics
                 .wrapper
                     #player1
                         h3 Player 1 (Top)
-                        #player1Id #{player1}
                     #player2
                         h3 Player 2 (Bottom)
-                        #player2Id #{player2}
                 .clearfix
                 .turn
-                button#cleargame Reset Game
+                button#pausegame Pause Game
             .column
                 #board
                     .tiles
                     .pieces
                         .player1pieces
                         .player2pieces
-        .hiddens
-            p(hidden)#myEmail #{my_email}
+
+        

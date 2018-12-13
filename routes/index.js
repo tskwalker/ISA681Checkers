@@ -3,8 +3,10 @@ var indexRouter = express.Router();
 
 /* GET home page. */
 indexRouter.get('/', function(req, res, next) {
-  res.render('index', { title: 'Checkers'});
+  console.log('session ID: ',req.sessionID);
+  res.render('index', { title: 'Checkers' });
   
 });
+
 
 module.exports = indexRouter;

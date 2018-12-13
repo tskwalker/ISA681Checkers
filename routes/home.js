@@ -10,6 +10,8 @@ homeRouter.get('/', async (req, res) => {
     
     var email = req.session.email;
     var name=req.session.name;
+    //var playerId = (Math.random() * 100000) | 0;
+    var playerId = 1;
 
     if (req.session && req.session.email) {
 
@@ -24,7 +26,8 @@ homeRouter.get('/', async (req, res) => {
             res.render('home', {
                 title: 'Home Page',
                 name: player.dataValues.firstName + " " + player.dataValues.lastName,
-                email: player.dataValues.email
+                email: player.dataValues.email,
+                pId:playerId
             });
 
         } else {
