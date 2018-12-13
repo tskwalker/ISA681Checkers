@@ -23,7 +23,7 @@ router.post('/',async (req, res) => {
 
     const { error } = models.Player.validate(newPlayer);
     if (error) {
-        console.log('pswd',error);
+        //console.log('pswd',error);
         const errMsg = error.details[0].message;
         if(errMsg.indexOf('password') > -1){
             var errors=['Password should be atleast 8 characters.','Password should contain atleast 1 uppercase ,1 lowercase,  1 numeral and 1 special character(!,@,#,$,%,^,&,*)'];

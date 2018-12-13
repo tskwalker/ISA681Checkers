@@ -1,5 +1,4 @@
-
-const socket = io.connect('https://localhost:3001/', {
+const socket = io.connect('https://localhost:3000/', {
     secure: true,
     'flash policy port': 3300
 });
@@ -8,85 +7,158 @@ var App = {
     gRoomId: 0,
     pEmail: "",
     pName: "",
+    playId: 0,
     mySocketId: 0,
     numPlayersInRoom: 0,
-    roundCount: 0,
-    currCountry: 0,
-    totalScore: 0,
+    roundCount: 0
 };
 
 var Game = {
     player1Email: "",
     player2Email: "",
     roomId: 0,
-    status: "ready"
+    status: "ready",
+    winner: "",
+    totalScore1: 0,
+    totalScore2: 0
 }
-var localStats = [];
+
+var PlayerMove = {
+    player: "",
+    playerEmail: "",
+    roomId: "",
+    src: [],
+    dest: [],
+    jump: false,
+    roundCount: 0
+}
+var roomList = [];
+var gamesHistory = [];
+
 //sockets and functions
 
 
 socket.on('newGameRoomCreated', function (data) {
     App.gRoomId = data.gRoomId;
     App.mySocketId = data.mySocketId;
+    //App.playId = data.playId;
+    //App.pEmail = data.pEmail;
     App.numPlayersInRoom = data.numPlayersInRoom;
     App.points = 0;
     console.log('GameRoom created with Id: ' + App.gRoomId + ' and socketId: ' + App.mySocketId + ' with ' + App.numPlayersInRoom + ' Players');
-    $("#createGRBtn").attr("disabled", "disabled");
+    //$("#createGRBtn").attr("disabled", "disabled");
 
-    $(".waitMsg").append(' on Game Room : ', App.gRoomId);
+    $(".waitMsg").append(' to join Game Room : ', App.gRoomId);
     $(".waitMsg").show();
     var gRoom = [];
     gRoom[App.gRoomId] = App.numPlayersInRoom;
     //showGameRooms(gRoom); 
     $("#joinGRBtn").prop('disabled', true);
+    Game.player1Email = data.player1_id;
+    //if(App.pEmail == Game.player1Email){
+    //window.alert('Welcome, Your game room number is:' + App.gRoomId + ' and you are player 1');
+    //}
+    window.alert('Welcome, ' + App.pEmail + ' Your game room number is:' + App.gRoomId + ' and you are player 1');
 });
 
 
 socket.on('gameRoomList', (GameRooms) => {
+    roomList = GameRooms;
     showGameRooms(GameRooms);
 });
 
 
 socket.on('startCheckers', (roomInfo) => {
-    //console.log(roomInfo);
+    console.log(roomInfo);
     //$("#startPlayBtn").removeAttr("disabled");
     $(".waitMsg").hide();
     $(".playerJoinedMsg").show();
-    $(".joinRoomMsg").show();
+    $(".joinRoomMsg").hide();
+    //window.alert('Welcome, ' + roomInfo.player2_id + ' You have joined game room :' + App.gRoomId + ' and you are player 2');
+
+    if (App.pEmail === roomInfo.player1_id) {
+        App.playId = 1;
+        //disable player 2 pieces
+        $(".player2pieces").removeClass('selected');
+        window.alert(roomInfo.player2_id + ' has joined your game room: ' + App.gRoomId + ' as Player 2, click ok to start the game');
+    }
+    else if (App.pEmail === roomInfo.player2_id) {
+        App.playId = 2;
+        //disable player 1 pieces
+        $(".player1pieces").removeClass('selected');
+        window.alert('Welcome, ' + roomInfo.player2_id + ', You have joined game room :' + App.gRoomId + ' and you are Player 2, click ok to start the game');
+
+    }
 
     Game.player1Email = roomInfo.player1_id;
     Game.player2Email = roomInfo.player2_id;
-    Game.roomId = roomInfo.gameId;
+    Game.roomId = App.gRoomId;
+    Game.redTop = 1;
+    Game.blueBottom = 2;
+    //Game.roomId = roomInfo.gameId;
     Game.status = roomInfo.status;
     console.log(Game)
 
 
     //var email = $("#myEmail").append();
     $("#player1Id").append(Game.player1Email);
-    $("#player2Id").append(Game.Player2Email);
+    $("#player2Id").append(Game.player2Email);
     $("#gameRoom").append(Game.roomId);
 
     $(".column").show();
 
     //startCheckers(Game);
+    console.log('Player 1 is ' + Game.player1Email + 'Player 2 is ' + Game.player2Email);
 
 });
 
-socket.on('takeStats', function (data) {
-    console.log('received stats');
-    localStats = data;
-    console.log(localStats);
-});
+socket.on('gameMoves', (data) => {
+    console.log(data);
+
+})
+
+socket.on("gameHistoryFromServer", (data) => {
+    console.log(data);
+    gamesHistory = data;
+
+    console.log('history',gamesHistory);
+    $(".selectRoomMsg").show();
+    for (var i in gamesHistory) {
+
+        var gId = gamesHistory[i].gameId;
+        $("<input type='radio' name='completeGRbtn' value=" + gId + ">" + gId + "</input><br/>").appendTo("#completedGames");
+
+    }
+   
 
 
+    //show the roomids of completed games.
+    /**
+     * the data is of format
+     * below
+      {
+      gameId: 44434, 
+      player1_id: "jais.mary@gmail.com", 
+      player2_id: "new.user3@checkers.com", 
+      status: "completed", 
+      result: "jais.mary@gmail.com"
+    } 
+    we need to show this data in data as history.
+    */
+
+
+})
 //functions
 
 function createGRoom() {
     socket.emit('createGameRoom', { email: App.pEmail });
-    console.log('emitted createGameRoom', App.pEmail);
+    //console.log('emitted createGameRoom', App.pEmail);
+    console.log('New game room was created by', App.pEmail);
+    console.log('emitted createGameRoom', App.mySocketId);
 
 }
 function joinRoom() {
+    $(".joinRoomMsg").show();
     var gRoomId = $("input[type='radio'][name='radiobtn']:checked").val();
     App.gRoomId = gRoomId;
     console.log('->value now: ' + App.gRoomId);
@@ -103,12 +175,7 @@ function checkGameRoomStatus() {
 }
 function startCheckers(GameData) {
     console.log('startCheckers', GameData);
-    // socket.emit('showBoard', { email: App.pEmail, gRoomId: App.gRoomId });
-    //io.to(Game.roomId).emit();
 
-
-    //to do 
-    //game logic
 }
 
 
@@ -118,23 +185,38 @@ function showGameRooms(GameRooms) {
             console.log(i + " has " + GameRooms[i] + " player(s)");
             $("<input type='radio' name='radiobtn' value=" + i + ">" + i + "</input><br/>").appendTo("#roomList");
         }
+        // else
+        // $("#createGRBtn").prop('disabled', false);
+
     }
     console.log(GameRooms);
     const rooms = jQuery.isEmptyObject(GameRooms);
     if (!rooms) {
 
         $("#joinGRBtn").prop('disabled', false);
-        $("#createGRBtn").prop('disabled', true);
+        // $("#createGRBtn").prop('disabled', true);
+
     }
 
 }
 
+function getCompletedGameMoves() {
+    var gRoomId = $("input[type='radio'][name='completeGRbtn']:checked").val();
+    console.log(gRoomId);
+    //emit completed game list
 
+   
+    socket.emit('getCompletedGameMoves',{roomId:gRoomId});
+}
 
+function getGameHistory() {
+    //get game history from server
+    socket.emit('gameHistory');
+}
 
 $(function () {
     $("#joinGRBtn").attr("disabled", "disabled");
-    $("#resumeGBtn").attr("disabled", "disabled");
+    // $("#resumeGBtn").attr("disabled", "disabled");
     $("#startPlayBtn").attr("disabled", "disabled");
 
     $(".column").hide();
@@ -151,12 +233,26 @@ $(function () {
         //startCheckers();
     });
 
+    $("#moveGBtn").on('click', () => {
+        getCompletedGameMoves();
+
+    })
+
+    $('#gameHistory').on('click', () => {
+        getGameHistory();
+    })
+
 
     App.pEmail = $("#sEmail").text();
     console.log('Created global email variable: ' + App.pEmail);
 
     App.pName = $("#sName").text();
     console.log('Created global name variable: ' + App.pName);
+
+    App.mySocketId = $("#pId").text();
+    console.log('Users player ID is ' + App.mySocketId);
+
+
 
 
     //checkers board
@@ -180,7 +276,10 @@ $(function () {
     var tiles = [];
     var players = [];
 
-
+    Game.player1Email = parseInt("1");
+    Game.player2Email = parseInt("2");
+    var firstPlayer = Game.player1Email;
+    var secondPlayer = Game.player2Email;
 
 
     //distance formula
@@ -197,23 +296,25 @@ $(function () {
         this.player = '';
         //figure out player by piece id
         if (this.element.attr("id") < 12)
-            this.player = 1;
+            this.player = firstPlayer;
+
         else
-            this.player = 2;
-        //makes object a king
+            this.player = secondPlayer;
+
         this.king = false;
         this.makeKing = function () {
-            this.element.css("backgroundImage", "url('king1" + this.player + ".png')");
+            this.element.css("backgroundImage", "url('/images/king" + this.player + ".png')");
             this.king = true;
         }
-        //moves the piece
+
         this.move = function (tile) {
             this.element.removeClass('selected');
             if (!Board.isValidPlacetoMove(tile.position[0], tile.position[1])) return false;
             var move = { dest: [tile.position[0], tile.position[1]] };
 
-            var src = [this.position[0], this.position[1]];
-            var dest = [tile.position[0], tile.position[1]];
+            PlayerMove.src = [this.position[0], this.position[1]];
+            PlayerMove.dest = [tile.position[0], tile.position[1]];
+            PlayerMove.player = this.player;
             //make sure piece doesn't go backwards if it's not a king
             if (this.player == 1 && this.king == false) {
                 if (tile.position[0] < this.position[0]) return false;
@@ -231,7 +332,7 @@ $(function () {
             if (!this.king && (this.position[0] == 0 || this.position[0] == 7))
                 this.makeKing();
             Board.changePlayerTurn();
-            socket.emit('moveTo', { src: src, dest: dest, player: this.player });
+            //socket.emit('moveTo', { src: PlayerMove.src, dest: PlayerMove.dest, player: this.player });
             return true;
         };
 
@@ -245,8 +346,32 @@ $(function () {
             } return false;
         };
 
+        this.checkBoundayandValidate = function (x, y) {
+            if (x > 7 || y > 7 || x < 0 || y < 0) return false;
+            return Board.isValidPlacetoMove(x, y);
+
+        }
+        this.canMakeAnyMove = function () {
+            //console.log('canMakeAnyMove from :', this.position);
+            //do boundary validation
+
+            if (this.checkBoundayandValidate(this.position[0] + 1, this.position[1] + 1) ||
+                this.checkBoundayandValidate(this.position[0] + 1, this.position[1] - 1) ||
+                this.checkBoundayandValidate(this.position[0] - 1, this.position[1] + 1) ||
+                this.checkBoundayandValidate(this.position[0] - 1, this.position[1] - 1)) {
+                return true;
+            }
+            else {
+                //no direct moves possible, so check if jumps are possible.
+                return this.canJumpAny();
+            };
+
+        }
+
         //tests if an opponent jump can be made to a specific place
         this.canOpponentJump = function (newPosition) {
+            // console.log('canOpponentJump:', newPosition[0],newPosition[1]);
+
             //find what the displacement is
             var dx = newPosition[1] - this.position[1];
             var dy = newPosition[0] - this.position[0];
@@ -289,11 +414,20 @@ $(function () {
         this.remove = function () {
             //remove it and delete it from the gameboard
             this.element.css("display", "none");
-            if (this.player == 1) $('#player2').append("<div class='capturedPiece'></div>");
-            if (this.player == 2) $('#player1').append("<div class='capturedPiece'></div>");
+            if (this.player == 1) {
+                $('#player2').append("<div class='capturedPiece'></div>");
+                Game.totalScore2++;
+                // console.log("Game.totalScore2:", Game.totalScore2)
+            }
+            if (this.player == 2) {
+                $('#player1').append("<div class='capturedPiece'></div>");
+                Game.totalScore1++;
+                //console.log("Game.totalScore1:", Game.totalScore1);
+            }
             Board.board[this.position[0]][this.position[1]] = 0;
             //reset position so it doesn't get picked up by the for loop in the canOpponentJump method
             this.position = [];
+
         }
     }
 
@@ -353,10 +487,11 @@ $(function () {
                     }
                 }
             }
+
+
         },
         //check if the location has an object
         isValidPlacetoMove: function (row, column) {
-            console.log(row, column); console.log(this.board);
             if (this.board[row][column] == 0) {
                 return true;
             } return false;
@@ -364,18 +499,47 @@ $(function () {
         //change the active player - also changes div.turn's CSS
         changePlayerTurn: function () {
             if (this.playerTurn == 1) {
+                $(".player2pieces").removeClass('selected');
                 this.playerTurn = 2;
                 $('.turn').css("background", "linear-gradient(to right, transparent 50%, #BEEE62 50%)");
                 return;
             }
             if (this.playerTurn == 2) {
+                $(".player1pieces").removeClass('selected');
                 this.playerTurn = 1;
                 $('.turn').css("background", "linear-gradient(to right, #BEEE62 50%, transparent 50%)");
             }
         },
+
+
+
+        getWinner: function () {
+
+            if (Game.totalScore1 == 12) {
+                Game.winner = Game.player1Email;
+
+            }
+            else if (Game.totalScore2 == 12) {
+                Game.winner = Game.player2Email;
+
+            }
+            if (Game.winner) {
+                Game.status = "completed";
+                return true;
+            }
+            else
+                return false;
+
+        },
+
+
         //reset the game
-        clear: function () {
-            location.reload();
+        pause: function () {
+            //location.pause();
+            setTimeout(function () {
+                window.alert('The game has been paused');
+            }, 1000);
+
         }
     }
 
@@ -390,19 +554,35 @@ $(function () {
     $('.piece').on("click", function () {
         var selected;
         var isPlayersTurn = ($(this).parent().attr("class").split(' ')[0] == "player" + Board.playerTurn + "pieces");
+        console.log('isplayerturn', isPlayersTurn);
         if (isPlayersTurn) {
-            if ($(this).hasClass('selected')) selected = true;
-            $('.piece').each(function (index) { $('.piece').eq(index).removeClass('selected') });
-            if (!selected) {
-                $(this).addClass('selected');
+            if (Board.playerTurn === App.playId) {
+                console.log(`${App.pEmail} turn`);
+                if ($(this).hasClass('selected')) selected = true;
+                $('.piece').each(function (index) {
+                    $('.piece').eq(index).removeClass('selected')
+                });
+                if (!selected) {
+                    $(this).addClass('selected');
+                }
+                var pieceToCheck = pieces[$('.selected').attr("id")];
+                if (!pieceToCheck.canMakeAnyMove()) {
+                    window.alert('No Moves possible for selected piece.');
+                }
             }
+
+
         }
     });
 
-    //reset game when clear button is pressed
-    $('#cleargame').on("click", function () {
-        Board.clear();
+    //pause game when pause button is pressed
+    $('#pausegame').on("click", function () {
+        Board.pause();
         console.log('board has been reset...');
+        //add emit
+        socket.emit('paused', Board.gameBoard);
+
+
     });
 
     //move piece when tile is clicked
@@ -419,61 +599,89 @@ $(function () {
             if (inRange) {
                 //if the move needed is jump, then move it but also check if another move can be made (double and triple jumps)
                 if (inRange == 'jump') {
+                    PlayerMove.jump = true;
                     if (piece.opponentJump(tile)) {
 
                         piece.move(tile);
                         if (piece.canJumpAny()) {
                             Board.changePlayerTurn(); //change back to original since another turn can be made
-                            piece.element.addClass('selected');
+                            //piece.element.addClass('selected');
                         }
                     }
                     //if it's regular then move it if no jumping is available
                 } else if (inRange == 'regular') {
+                    PlayerMove.jump = false;
                     if (!piece.canJumpAny()) {
                         piece.move(tile);
-                        
+
 
                     } else {
                         alert("You must jump when possible!");
                     }
+
                 }
+                PlayerMove.roomId = App.gRoomId;
+                PlayerMove.playerEmail = App.pEmail;
+                PlayerMove.roundCount = App.roundCount++;
+                socket.emit('moveTo', { PlayerMove });
             }
         }
     });
 
+    function checkIfAnyMovesLeft() {
+        for (var i = 0; i < pieces.length; i++) {
+
+            var piece = pieces[i];
+            if (piece.position != 0 && piece.player == App.playId) {
+                console.log('piece position :', piece);
+                if (piece.canMakeAnyMove()) {
+                    return true;
+                }
+            }
+
+        }
+        return false;
+
+    }
+
 
     socket.on('moved', (data) => {
+        var src = data.move.PlayerMove.src;
+        var dest = data.move.PlayerMove.dest;
+        var jump = data.move.PlayerMove.jump;
 
-
-        console.log('moved data', data);
-        console.log(Game);
-
-        var src = data.move.src;
-        var dest = data.move.dest;
-
-        //src is a piece
+        //src is a piece. So find the piece at that src
         var piece;
         for (var i = 0; i < pieces.length; i++) {
             var position = pieces[i].position
             if ((position[0] === src[0]) && (position[1] === src[1])) {
                 piece = pieces[i];
-                console.log(piece);
             }
         }
 
-        //destination is a tile
-
+        //destination is a tile. Identify dest tile 
         var tile;
         for (var i = 0; i < tiles.length; i++) {
             var position = tiles[i].position
             if ((position[0] === dest[0]) && (position[1] === dest[1])) {
                 tile = tiles[i];
-                console.log(tile);
+                //console.log(tile);
             }
         }
 
-        if (piece && tile){
+        //piece and tile will be available only in opponents board. So replicate the moves.
+        if (piece && tile) {
 
+            //check if that was a jump move
+            if (jump === true) {
+                //  console.log(piece, tile);
+                var pieceToRemove = piece.canOpponentJump(tile.position);
+                if (pieceToRemove) {
+                    pieces[pieceIndex].remove();
+                }
+
+            }
+            //move piece from src to destination
             Board.board[piece.position[0]][piece.position[1]] = 0;
             Board.board[tile.position[0]][tile.position[1]] = data.move.player;
             piece.position = [tile.position[0], tile.position[1]];
@@ -483,16 +691,62 @@ $(function () {
             //if piece reaches the end of the row on opposite side crown it a king (can move all directions)
             if (!piece.king && (piece.position[0] == 0 || piece.position[0] == 7))
                 piece.makeKing();
+            //piece.makeKing();
             Board.changePlayerTurn();
+
+            //check is more jumps are possible for the current user.
+            if (jump === true) {
+                if (piece.canJumpAny()) {
+                    Board.changePlayerTurn(); //change back to original since another turn can be made
+                }
+
+            }
+
         }
 
-        
+        console.log('checking for winner....');
+        if (Board.getWinner()) {
+            if (Game.winner == App.pEmail) {
+                socket.emit('end', { Game });
+            }
 
-        
+            window.alert(`Game stat: winner : ${Game.winner}`);
+        } else {
+            console.log('winner check :', pieces);
+
+            if (!checkIfAnyMovesLeft()) {
+                if (Game.totalScore1 > Game.totalScore2) winPlayer = 1;
+                else winPlayer = 2;
+
+                if ((winPlayer == 1))
+                    Game.winner = Game.player1Email;
+                else if (winPlayer == 2)
+                    Game.winner = Game.player2Email;
+
+                if (Game.winner == App.pEmail) {
+                    socket.emit('end', { Game });
+                }
+
+                window.alert(`Game stat: winner : ${Game.winner}`);
+            } else
+                console.log('Moves Left');
+
+        }
+
+
+    })
+
+    socket.on('pause', (data) => {
+        Board.pause();
+        //add timeout
+        //logout user
+
+    })
+
+    socket.on('currentGameMoves', (data) => {
+        console.log(data);
+        // show them in ui.
     })
 
 });
-
-
-
 

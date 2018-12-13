@@ -39,16 +39,16 @@ loginRouter.post('/', async (req, res) => {
 
   let player = await models.Player.findOne({ where: { email: req.body.username } });
   if (player) {
-    //console.log(player.dataValues);
+    
     const match = await bcrypt.compare(req.body.password, player.dataValues.password);
     if (match) {
 
       const name=player.dataValues.firstName + " " + player.dataValues.lastName;
       req.session.email=req.body.username;
       req.session.name=name;
-      console.log('post login: ',req.session);
+      
       res.redirect('/home');
-      //res.send('password verified successfully')
+      
     }
     else
       res.render('login',{error:'Invalid username or password',csrfToken: req.csrfToken()});

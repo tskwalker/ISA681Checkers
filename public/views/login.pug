@@ -15,6 +15,6 @@ block body
             label(for='password') Password:
             input#password.form-control(type="password" name="password",autocomplete='off')
 
-        input(name='_csrf' value= csrfToken)
+        input(type='hidden' name='_csrf' value= csrfToken)
         button.btn.btn-primary(type='submit') Submit
     
