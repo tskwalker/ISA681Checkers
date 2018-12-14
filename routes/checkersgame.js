@@ -6,7 +6,7 @@ const Op= models.Sequelize.Op;
 
 /* GET checkers game page. */
 gameRouter.get('/', async (req, res) =>{
-    console.log(req.session);
+    
     var email = req.session.email;
     var name=req.session.name;
 
@@ -18,7 +18,7 @@ gameRouter.get('/', async (req, res) =>{
     });
 
     if(gameExist){
-        console.log('gameExists',gameExist.dataValues);
+        
         var player1 = gameExist.dataValues.player1_id;
         var player2 = gameExist.dataValues.player2_id;
         var roomId = gameExist.dataValues.gameId;
@@ -36,18 +36,4 @@ gameRouter.get('/', async (req, res) =>{
   
 })
 module.exports = gameRouter;
-
-
-/*var express = require('express');
-var gameRouter = express.Router();
-
-
-/* GET checkers game page. 
-gameRouter.get('/', (req, res) =>{
-    res.render('checkersgame', { title: 'Lets Play Checkers' })
-})
-
- 
-
-module.exports = gameRouter;*/
 
