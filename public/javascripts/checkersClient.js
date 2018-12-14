@@ -254,7 +254,6 @@ $(function () {
 
 
 
-
     //checkers board
 
 
@@ -262,14 +261,14 @@ $(function () {
     // var socket=io();
     //The initial setup
     var gameBoard = [
-        [0, 1, 0, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0],
-        [0, 1, 0, 1, 0, 1, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [2, 0, 2, 0, 2, 0, 2, 0],
-        [0, 2, 0, 2, 0, 2, 0, 2],
-        [2, 0, 2, 0, 2, 0, 2, 0]
+      [0, 1, 0, 1, 0, 1, 0, 1],
+      [1, 0, 1, 0, 1, 0, 1, 0],
+      [0, 1, 0, 1, 0, 1, 0, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [2, 0, 2, 0, 2, 0, 2, 0],
+      [0, 2, 0, 2, 0, 2, 0, 2],
+      [2, 0, 2, 0, 2, 0, 2, 0]
     ];
     //arrays to store the instances
     var pieces = [];
@@ -429,7 +428,9 @@ $(function () {
             this.position = [];
 
         }
+      
     }
+
 
     function Tile(element, position) {
         //this.piece = piece;
@@ -542,7 +543,8 @@ $(function () {
 
         }
     }
-
+  
+  
     //initialize the board
     Board.initalize();
 

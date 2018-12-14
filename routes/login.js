@@ -5,7 +5,8 @@ const bcrypt = require('bcrypt');
 
 
 /* GET login page. */
-loginRouter.get('/', async (req, res, next)=> {
+loginRouter.get('/', async (req, res) =>{
+
   console.log(req,' user logged in..');
   if(req.session && req.session.email){
     
@@ -27,12 +28,11 @@ loginRouter.get('/', async (req, res, next)=> {
   }else{
     res.render('login', { title: 'Checkers',csrfToken: req.csrfToken() });
   }
-  
 });
+
 
 loginRouter.post('/', async (req, res) => {
 
-  
   var login = { email: req.body.username, password: req.body.password };
   const { error } = models.Player.validateLogin(login);
   if (error) return res.status(400).send(error.details[0].message);

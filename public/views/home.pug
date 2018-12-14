@@ -18,9 +18,10 @@ html
         -url="/logout"
         a(href=url style='align:right') Logout
     
-
+    // pulled from login page
     p(hidden)#sEmail #{email}
     p(hidden)#sName #{name}
+    p(hidden)#pId #{playerId}
 
     #content
         .options
@@ -67,19 +68,20 @@ html
                 
                 
             .stats
-                h2 Game Statistics 
+                h2 Game Room Information 
                 p Game Room : 
                     #gameRoom  #{gameRoom}
                 .wrapper
                     #player1
                         h3 Player 1 (Top)
                         #player1Id #{player1}
+                        //#pId #{}
                     #player2
                         h3 Player 2 (Bottom)
                         #player2Id #{player2}
                 .clearfix
                 .turn
-                button#cleargame Reset Game
+                button#pausegame Pause Game
             .column
                 #board
                     .tiles
@@ -88,3 +90,5 @@ html
                         .player2pieces
             .hiddens
                 p(hidden)#myEmail #{my_email}
+
+

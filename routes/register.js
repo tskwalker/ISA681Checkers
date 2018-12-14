@@ -7,11 +7,10 @@ const models = require('../models');
 
 
 router.get('/', (req, res) => {
-    console.log(req.cookies);
     res.render('register', { title: 'New player registration' ,csrfToken: req.csrfToken()})
 })
 
-router.post('/',async (req, res) => {
+router.post('/', async (req, res) => {
     console.log(req);
     const newPlayer = {
         lastName: req.body.lastName,

@@ -12,18 +12,15 @@ var csrf = require('csurf');
 var session = require('express-session');
 var cors = require('cors');
 var morgan = require('morgan');
-var hsts = require('hsts');
+var Joi = require('joi');
 const models = require('./models');
+var hsts = require('hsts');
 const xssFilter = require('x-xss-protection');
-
-
 
 
 //middleware
 var error = require('./middleware/error');
-
 var csrfProtection = csrf({ cookie: false });
-
 
 var indexRouter = require('./routes/index');
 var loginRouter = require('./routes/login');
@@ -38,23 +35,12 @@ var gameRouter = require('./routes/checkersgame');
  * get the keys from /certificates folder
  */
 var options = {
-  //testing
-  //key: fs.readFileSync('./bin/certificates/newCert-key.pem'),
-  //cert: fs.readFileSync('./bin/certificates/newCert-cert.pem'),
-  //ca: [fs.readFileSync('./bin/certificates/newCert-cert.pem')],
+  
   rejectUnauthorized: true,
-  // key: fs.readFileSync('./bin/certificates/checkers-key.pem'),
-  ///cert: fs.readFileSync('./bin/certificates/checkers-cert.pem'),
-  // dhparam: fs.readFileSync('./bin/certificates/dhparam.pem'),
-  // ca: [fs.readFileSync('./bin/certificates/checkers-cert.pem')]
-
   key: fs.readFileSync('./bin/certificates/localhost.key'),
   cert: fs.readFileSync('./bin/certificates/localhost.crt'),
-  //ca: [fs.readFileSync('./bin/certificates/newCert-cert.pem')],
-
-
+  
 };
-
 
 var app = express();
 var server = https.createServer(options, app);
@@ -63,6 +49,7 @@ app.set('trust proxy', 1);
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/jquery', express.static(__dirname + '/node_modules/jquery/dist/'));
@@ -87,13 +74,15 @@ app.use(session({
   },
 }))
 
+
 app.use(helmet());
 app.use(helmet.noCache());
 app.use(helmet.contentSecurityPolicy({
   directives: {
-    defaultSrc: ["'self'", 'wss://localhost:3001'],
+  defaultSrc: ["'self'", 'https://localhost:3000'],
     styleSrc: ["'self'", "'unsafe-inline'"],
-    scriptSrc: ["'self'"]
+    scriptSrc: ["'self'"],
+    fontSrc: ["'self'", 'https://fonts.googleapis.com/css?family=Lato:400,700']
   }, setAllHeaders: true,
 }));
 app.use(helmet.noSniff());
@@ -118,12 +107,23 @@ app.use(csrfProtection);
 //Socket Events
 var AllGames = {};
 var globalStats = [];
+//var players{};
 
 
 io.on('connection', function (socket) {
   console.log('A player connected', socket.id);
+  /*
+  // create a new player and add it to our players object
+  players[socket.id] = {
+    rotation: 0,
+    x: Math.floor(Math.random() * 700) + 50,
+    y: Math.floor(Math.random() * 500) + 50,
+    playerId: socket.id,
+    team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
+  };
+  // send the players object to the new player
+  socket.emit('currentPlayers', players);*/
 
-  io.sockets.connected[socket.id].emit('takeStats', globalStats);
   socket.on('disconnect', function () {
     setTimeout(function () {
       console.log("User " + socket.id + " disconnected!");
@@ -141,6 +141,7 @@ io.on('connection', function (socket) {
   socket.on('createGameRoom', async function (data) {
     var thisGameId = (Math.random() * 100000) | 0;
     var email = data.email;
+    var playerNumber = 1;
 
     socket.join(thisGameId.toString());
     //var numPlayersInRoom = 1;
@@ -151,8 +152,11 @@ io.on('connection', function (socket) {
     var game = {
       gameId: thisGameId,
       player1_id: email,
+      //player2_id: mySocketId,
+      //player2_id: email,
       player2_id: '',
-      status: 'waiting'
+      status: 'waiting',
+      //playerOne: playerNumber
     };
     try {
       const gameRoom = await models.Game.create(game);
@@ -177,14 +181,17 @@ io.on('connection', function (socket) {
     var playerInfo = {
       gRoomId: newPlayer.gRoomId,
       mySocketId: socket.id,
-      numPlayersInRoom: 2
+      numPlayersInRoom: 2,
+      //play1Id: 1,
+      //play2Id: 2
     }
 
+    
     var roomId = playerInfo.gRoomId;
     socket.join(roomId);
     AllGames[playerInfo.gRoomId] = 2;
+    
     //now update db
-
     const { error } = models.Game.validateEmail({ player2_id: newPlayer.email });
     if (error) socket.emit('error', { message: 'Invalid player Email Received' })
 
@@ -200,14 +207,37 @@ io.on('connection', function (socket) {
           io.to(roomId).emit('startCheckers', getRoomInfo.dataValues);
       }
 
-    } catch (err) {
+    } 
+    
+    catch (err) {
       console.log(err);
       socket.emit('error', err);
 
     }
 
-  });
+    //todo
+    //now initialize game data and set everything ready for players to start
+    /**
+       * Handle the turn played by either player and notify the other.
+       */
+    /*socket.on('playTurn', (data) => {
+      socket.broadcast.to(data.roomId).emit('turnPlayed', {
+        tile: data.tile,
+        room: gRoomId
+      });
+    });*/
+    //socket.on('userId',function(data){
+      //var user = data.id ;
+      //console.log('GameRoomCreated: ' + thisGameId + " user email: ");
+      //Add user to a list and consolidate or whatever //
+    //});
 
+    // when the client emits 'typing', we broadcast it to others
+    /*socket.on('typing', function () {
+      socket.broadcast.emit('typing', {
+      username: socket.username
+    });*/
+  })
 
   socket.on('moveTo', async (moveSrcDest) => {
 
@@ -237,9 +267,6 @@ io.on('connection', function (socket) {
   socket.on('end', async (data) => {
     console.log(data);
     var game = data.Game;
-
-
-
     //update Game table. set status as completed and add the winner email id.
     const gameData = await models.Game.update({ status: game.status, result: game.winner }, {
       where: { gameId: game.roomId }
@@ -311,10 +338,15 @@ io.on('connection', function (socket) {
     } catch (err) {
     }
   })
+  socket.on('paused',()=>{
+    console.log('User has paused the game');
+    io.sockets.emit('pause');
 
-
+  })
 
 });
+
+
 
 app.use('/', indexRouter);
 app.use('/login', loginRouter);
