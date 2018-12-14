@@ -27,7 +27,8 @@ html
         .options
             button#createGRBtn Create Game Room
             button#joinGRBtn Join Game Room
-            button#resumeGBtn Resume Game
+            button#moveGBtn Game Moves
+            button#gameHistory Game History
 
     p(hidden).waitMsg.
         Waiting for second Player
@@ -41,13 +42,19 @@ html
       .availList
            button(hidden)#jRoomBtn Join
 
+    p(hidden).selectRoomMsg
+        | Select a Game Room to view moves.
+
+    #completedGames
+        .rooms 
+            button(hidden)#cRoomId Get
+
+    #moves_table
+
     #content
         .checkers
             button#startPlayBtn(type="button") StartPlay
             //a(href="/checkersGame")
-
-                
-
 
     
     .column

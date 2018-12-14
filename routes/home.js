@@ -6,7 +6,7 @@ var models = require('../models');
 
 homeRouter.get('/', async (req, res) => {
 
-    console.log('home:', req.session);
+    //console.log('home:', req.session);
     
     var email = req.session.email;
     var name=req.session.name;
