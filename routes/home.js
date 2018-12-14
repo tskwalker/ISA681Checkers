@@ -6,11 +6,11 @@ var models = require('../models');
 
 homeRouter.get('/', async (req, res) => {
 
-    //console.log('home:', req.session);
+  
     
     var email = req.session.email;
     var name=req.session.name;
-    //var playerId = (Math.random() * 100000) | 0;
+    
     var playerId = 1;
 
     if (req.session && req.session.email) {

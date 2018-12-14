@@ -66,7 +66,7 @@ socket.on('gameRoomList', (GameRooms) => {
 
 
 socket.on('startCheckers', (roomInfo) => {
-    console.log(roomInfo);
+    
 
     $(".waitMsg").hide();
     $(".playerJoinedMsg").show();
@@ -128,7 +128,6 @@ socket.on('gameMoves', (data) => {
     });
     table.setData(data);
 
-
 })
 
 socket.on("gameHistoryFromServer", (data) => {
@@ -169,7 +168,7 @@ socket.on("gameHistoryFromServer", (data) => {
 
 function createGRoom() {
     socket.emit('createGameRoom', { email: App.pEmail });
-    //console.log('emitted createGameRoom', App.pEmail);
+    
     console.log('New game room was created by', App.pEmail);
     console.log('emitted createGameRoom', App.mySocketId);
     $("#gameHistory").prop('disabled', true);
@@ -208,17 +207,11 @@ function showGameRooms(GameRooms) {
             console.log(i + " has " + GameRooms[i] + " player(s)");
             $("<input type='radio' name='radiobtn' value=" + i + ">" + i + "</input><br/>").appendTo("#roomList");
         }
-        // else
-        // $("#createGRBtn").prop('disabled', false);
-
     }
-    console.log(GameRooms);
     const rooms = jQuery.isEmptyObject(GameRooms);
     if (!rooms) {
 
         $("#joinGRBtn").prop('disabled', false);
-        // $("#createGRBtn").prop('disabled', true);
-
     }
 
 }
@@ -238,7 +231,7 @@ function getGameHistory() {
 
 $(function () {
     $("#joinGRBtn").attr("disabled", "disabled");
-    // $("#resumeGBtn").attr("disabled", "disabled");
+    
     $("#startPlayBtn").attr("disabled", "disabled");
     $("#moveGBtn").attr('disabled', "disabled");
 
@@ -252,9 +245,7 @@ $(function () {
     $("#joinGRBtn").one('click', function () {
         joinRoom();
     });
-    $("#startPlayBtn").one('click', () => {
-        //startCheckers();
-    });
+    
 
     $("#moveGBtn").on('click', () => {
         getCompletedGameMoves();
@@ -280,7 +271,10 @@ $(function () {
     App.mySocketId = $("#pId").text();
     console.log('Users player ID is ' + App.mySocketId);
 
+/***************************
+ */
 
+ /********************************** */
 
     //checkers board
 
@@ -359,7 +353,7 @@ $(function () {
             if (!this.king && (this.position[0] == 0 || this.position[0] == 7))
                 this.makeKing();
             Board.changePlayerTurn();
-            //socket.emit('moveTo', { src: PlayerMove.src, dest: PlayerMove.dest, player: this.player });
+            
             return true;
         };
 
@@ -379,8 +373,7 @@ $(function () {
 
         }
         this.canMakeAnyMove = function () {
-            //console.log('canMakeAnyMove from :', this.position);
-            //do boundary validation
+            
 
             if (this.checkBoundayandValidate(this.position[0] + 1, this.position[1] + 1) ||
                 this.checkBoundayandValidate(this.position[0] + 1, this.position[1] - 1) ||
@@ -397,7 +390,7 @@ $(function () {
 
         //tests if an opponent jump can be made to a specific place
         this.canOpponentJump = function (newPosition) {
-            // console.log('canOpponentJump:', newPosition[0],newPosition[1]);
+            
 
             //find what the displacement is
             var dx = newPosition[1] - this.position[1];
@@ -444,12 +437,12 @@ $(function () {
             if (this.player == 1) {
                 $('#player2').append("<div class='capturedPiece'></div>");
                 Game.totalScore2++;
-                // console.log("Game.totalScore2:", Game.totalScore2)
+                
             }
             if (this.player == 2) {
                 $('#player1').append("<div class='capturedPiece'></div>");
                 Game.totalScore1++;
-                //console.log("Game.totalScore1:", Game.totalScore1);
+                
             }
             Board.board[this.position[0]][this.position[1]] = 0;
             //reset position so it doesn't get picked up by the for loop in the canOpponentJump method
@@ -584,10 +577,10 @@ $(function () {
     $('.piece').on("click", function () {
         var selected;
         var isPlayersTurn = ($(this).parent().attr("class").split(' ')[0] == "player" + Board.playerTurn + "pieces");
-        console.log('isplayerturn', isPlayersTurn);
+        
         if (isPlayersTurn) {
             if (Board.playerTurn === App.playId) {
-                console.log(`${App.pEmail} turn`);
+                
                 if ($(this).hasClass('selected')) selected = true;
                 $('.piece').each(function (index) {
                     $('.piece').eq(index).removeClass('selected')
@@ -663,7 +656,7 @@ $(function () {
 
             var piece = pieces[i];
             if (piece.position != 0 && piece.player == App.playId) {
-                console.log('piece position :', piece);
+                
                 if (piece.canMakeAnyMove()) {
                     return true;
                 }
@@ -695,7 +688,7 @@ $(function () {
             var position = tiles[i].position
             if ((position[0] === dest[0]) && (position[1] === dest[1])) {
                 tile = tiles[i];
-                //console.log(tile);
+                
             }
         }
 
@@ -704,7 +697,7 @@ $(function () {
 
             //check if that was a jump move
             if (jump === true) {
-                //  console.log(piece, tile);
+                
                 var pieceToRemove = piece.canOpponentJump(tile.position);
                 if (pieceToRemove) {
                     pieces[pieceIndex].remove();
@@ -745,7 +738,7 @@ $(function () {
             $("#moveGBtn").prop('disabled', false);
             $("#clearTables").prop('disabled', false);
         } else {
-            console.log('winner check :', pieces);
+            
 
             if (!checkIfAnyMovesLeft()) {
                 if (Game.totalScore1 > Game.totalScore2) winPlayer = 1;
@@ -782,6 +775,33 @@ $(function () {
     socket.on('currentGameMoves', (data) => {
         console.log(data);
         // show them in ui.
+        $(".column").hide();
+        
+
+        var table = new Tabulator("#currentMoves", {
+            columnVertAlign:"bottom", //align header contents to bottom of cell
+            columns:[
+            {title:"Name", field:"name", width:160},
+            {//create column group
+                title:"Player 1",
+                columns:[
+                {title:"round", field:"progress", sorter:"number"},
+                {title:"src", field:"rating", align:"center"},
+                {title:"dest", field:"car", align:"center"},
+                ],
+            },
+            {//create column group
+                title:"Player 2",
+                columns:[
+                {title:"round", field:"gender", sorter:"number",},
+                {title:"source", field:"col"},
+                {title:"dest", field:"dob"},
+                ],
+            },
+            ],
+        });
+
+
     })
 
 });

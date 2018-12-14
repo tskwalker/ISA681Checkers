@@ -116,17 +116,7 @@ var globalStats = [];
 
 io.on('connection', function (socket) {
   console.log('A player connected', socket.id);
-  /*
-  // create a new player and add it to our players object
-  players[socket.id] = {
-    rotation: 0,
-    x: Math.floor(Math.random() * 700) + 50,
-    y: Math.floor(Math.random() * 500) + 50,
-    playerId: socket.id,
-    team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
-  };
-  // send the players object to the new player
-  socket.emit('currentPlayers', players);*/
+  
 
   socket.on('disconnect', function () {
     setTimeout(function () {
@@ -156,11 +146,10 @@ io.on('connection', function (socket) {
     var game = {
       gameId: thisGameId,
       player1_id: email,
-      //player2_id: mySocketId,
-      //player2_id: email,
+      
       player2_id: '',
       status: 'waiting',
-      //playerOne: playerNumber
+      result: 'playing'
     };
     try {
       const gameRoom = await models.Game.create(game);
@@ -186,8 +175,7 @@ io.on('connection', function (socket) {
       gRoomId: newPlayer.gRoomId,
       mySocketId: socket.id,
       numPlayersInRoom: 2,
-      //play1Id: 1,
-      //play2Id: 2
+      
     }
 
     
@@ -211,42 +199,18 @@ io.on('connection', function (socket) {
           io.to(roomId).emit('startCheckers', getRoomInfo.dataValues);
       }
 
-    } 
-    
-    catch (err) {
+    } catch (err) {
       console.log(err);
       socket.emit('error', err);
 
     }
-
-    //todo
-    //now initialize game data and set everything ready for players to start
-    /**
-       * Handle the turn played by either player and notify the other.
-       */
-    /*socket.on('playTurn', (data) => {
-      socket.broadcast.to(data.roomId).emit('turnPlayed', {
-        tile: data.tile,
-        room: gRoomId
-      });
-    });*/
-    //socket.on('userId',function(data){
-      //var user = data.id ;
-      //console.log('GameRoomCreated: ' + thisGameId + " user email: ");
-      //Add user to a list and consolidate or whatever //
-    //});
-
-    // when the client emits 'typing', we broadcast it to others
-    /*socket.on('typing', function () {
-      socket.broadcast.emit('typing', {
-      username: socket.username
-    });*/
   })
-
+  
+  
   socket.on('moveTo', async (moveSrcDest) => {
 
     var currentMove = moveSrcDest.PlayerMove;
-    //console.log(currentMove);
+    
     var gameMove = {
       gameId: currentMove.roomId,
       moveNum: currentMove.roundCount,
@@ -255,7 +219,7 @@ io.on('connection', function (socket) {
       dest: currentMove.dest
     }
 
-    console.log('Game set to playing..');
+    console.log('Playing..');
 
     const { error } = models.GameMove.validate(gameMove);
     if (error) socket.emit('error', { message: 'Invalid Move' });
@@ -279,30 +243,35 @@ io.on('connection', function (socket) {
     if (gameData) {
       console.log('Updated result in DB.');
       console.log('Fetching moves..')
+      var player1=[],player2=[],currentGameMoves=[];
       const player1Moves = await models.GameMove.findAll({
         where: {
           player: game.player1Email,
           gameId: game.roomId
-        }
+        },
+        attributes:[player,src,dest]
       });
+      if(player1Moves){
+        player1Moves.forEach(GameMove => {
+          player1.push(GameMove.get({ plain: true }));
+        })
+      }
 
       const player2Moves = await models.GameMove.findAll({
         where: {
           player: game.player2Email,
           gameId: game.roomId
-        }
+        },
+        attributes:[player,src,dest]
       });
+      if(player2Moves){
+        player2Moves.forEach(GameMove => {
+          player2.push(GameMove.get({ plain: true }));
 
-      console.log(player1Moves[0].dataValues);
-      console.log(player2Moves[0].dataValues);
-      io.sockets.emit('currentGameMoves', { player1: player1Moves[0].dataValues, player2: player2Moves[0].dataValues });
+        })
+      }
+      io.sockets.emit('currentGameMoves', { player1,player2 });
     }
-
-  })
-
-  //get moves for game
-  socket.on('getGameMoves', async (data) => {
-    
 
   })
 
