@@ -41,8 +41,7 @@ var gamesHistory = [];
 socket.on('newGameRoomCreated', function (data) {
     App.gRoomId = data.gRoomId;
     App.mySocketId = data.mySocketId;
-    //App.playId = data.playId;
-    //App.pEmail = data.pEmail;
+    
     App.numPlayersInRoom = data.numPlayersInRoom;
     App.points = 0;
     console.log('GameRoom created with Id: ' + App.gRoomId + ' and socketId: ' + App.mySocketId + ' with ' + App.numPlayersInRoom + ' Players');
@@ -55,9 +54,7 @@ socket.on('newGameRoomCreated', function (data) {
     //showGameRooms(gRoom); 
     $("#joinGRBtn").prop('disabled', true);
     Game.player1Email = data.player1_id;
-    //if(App.pEmail == Game.player1Email){
-    //window.alert('Welcome, Your game room number is:' + App.gRoomId + ' and you are player 1');
-    //}
+    
     window.alert('Welcome, ' + App.pEmail + ' Your game room number is:' + App.gRoomId + ' and you are player 1');
 });
 
@@ -70,7 +67,7 @@ socket.on('gameRoomList', (GameRooms) => {
 
 socket.on('startCheckers', (roomInfo) => {
     console.log(roomInfo);
-    //$("#startPlayBtn").removeAttr("disabled");
+    
     $(".waitMsg").hide();
     $(".playerJoinedMsg").show();
     $(".joinRoomMsg").hide();
@@ -204,6 +201,8 @@ function getCompletedGameMoves() {
     var gRoomId = $("input[type='radio'][name='completeGRbtn']:checked").val();
     console.log(gRoomId);
     //emit completed game list
+    if(gRoomId)
+        //enable game moves button
 
    
     socket.emit('getCompletedGameMoves',{roomId:gRoomId});

@@ -79,10 +79,10 @@ app.use(helmet());
 app.use(helmet.noCache());
 app.use(helmet.contentSecurityPolicy({
   directives: {
-  defaultSrc: ["'self'", 'https://localhost:3000'],
+  defaultSrc: ["'self'", 'wss://localhost:3000'],
     styleSrc: ["'self'", "'unsafe-inline'"],
     scriptSrc: ["'self'"],
-    fontSrc: ["'self'", 'https://fonts.googleapis.com/css?family=Lato:400,700']
+    fontSrc: ["'self'"]
   }, setAllHeaders: true,
 }));
 app.use(helmet.noSniff());
