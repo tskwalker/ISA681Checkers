@@ -2,8 +2,10 @@ html
   head
     title Registration
     script(src='/socket.io/socket.io.js')
-    script(src='javascripts/checkersClient.js')
     script(src="/jquery/jquery.js")
+    script(src='javascripts/checkersClient.js')
+    
+    
   body
     div
       h3 checkers Web Page - Registration
@@ -12,10 +14,10 @@ html
       if(error)
           for err in error
             p #{err}
-      if(userError)
-        p #{error}
+      if(usererror)
+        p #{usererror}
 
-    form(action='/register', method='POST' autocomplete="off")
+    form(action='/register', method='POST', autocomplete="off")
       div
         label Last name:
         input(type='text', name='lastName')

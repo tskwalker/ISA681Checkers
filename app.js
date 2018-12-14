@@ -16,10 +16,13 @@ var Joi = require('joi');
 const models = require('./models');
 var hsts = require('hsts');
 const xssFilter = require('x-xss-protection');
+var Tabulator = require('tabulator-tables');
 
 
 //middleware
 var error = require('./middleware/error');
+var errorHandler = require('./middleware/handlers');
+
 var csrfProtection = csrf({ cookie: false });
 
 var indexRouter = require('./routes/index');
@@ -53,6 +56,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/jquery', express.static(__dirname + '/node_modules/jquery/dist/'));
+app.use('/tabulator',express.static(__dirname + '/node_modules/tabulator-tables/dist/'))
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', __dirname + '/public/views');
 app.engine('html', require('ejs').renderFile);

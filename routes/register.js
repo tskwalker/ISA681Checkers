@@ -20,19 +20,20 @@ router.post('/', async (req, res) => {
 
     }
 
+    console.log("in post",newPlayer);
     const { error } = models.Player.validate(newPlayer);
     if (error) {
-        //console.log('pswd',error);
+        console.log('pswd',error);
         const errMsg = error.details[0].message;
         if(errMsg.indexOf('password') > -1){
             var errors=['Password should be atleast 8 characters.','Password should contain atleast 1 uppercase ,1 lowercase,  1 numeral and 1 special character(!,@,#,$,%,^,&,*)'];
             return res.render('register',{error:errors,csrfToken: req.csrfToken()});
         }else
-            return res.render('register',{userError:error.details[0].message,csrfToken: req.csrfToken()});
+            return res.render('register',{usererror:error.details[0].message,csrfToken: req.csrfToken()});
     }
 
     let player = await models.Player.findOne({ where: { email: req.body.email } });
-    if (player) return res.render('register',{error:'User already registered.',csrfToken: req.csrfToken()});
+    if (player) return res.render('register',{usererror:'User already registered.',csrfToken: req.csrfToken()});
 
     player = new models.Player(_.pick(req.body, ['firstName', 'lastName', 'email', 'password']));
     const salt = await bcrypt.genSalt(11);
