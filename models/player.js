@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     email: {
       type: DataTypes.STRING,
+      primaryKey: true,
       min:5,
       max:255
     },
@@ -32,8 +33,8 @@ module.exports = (sequelize, DataTypes) => {
     var schema ={
       firstName:Joi.string().required(),
       lastName:Joi.string().required(),
-      email:Joi.string().min(5).max(255).email().required(),
-      password:Joi.string().min(5).max(15).required()
+      email:Joi.string().min(5).max(255).email({minDomainAtoms:2}).required(),
+      password:Joi.string().required().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/)
     }
     return Joi.validate(player,schema);
 

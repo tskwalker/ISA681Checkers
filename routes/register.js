@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-    console.log(req);
+    
     const newPlayer = {
         lastName: req.body.lastName,
         firstName: req.body.firstName,
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
             var errors=['Password should be atleast 8 characters.','Password should contain atleast 1 uppercase ,1 lowercase,  1 numeral and 1 special character(!,@,#,$,%,^,&,*)'];
             return res.render('register',{error:errors,csrfToken: req.csrfToken()});
         }else
-            return res.render('register',{error:error.details[0].message,csrfToken: req.csrfToken()});
+            return res.render('register',{userError:error.details[0].message,csrfToken: req.csrfToken()});
     }
 
     let player = await models.Player.findOne({ where: { email: req.body.email } });

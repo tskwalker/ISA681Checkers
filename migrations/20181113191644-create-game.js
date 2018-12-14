@@ -8,7 +8,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      game_id: {
+      gameId: {
         type: Sequelize.INTEGER,
         primaryKey:true
       },
@@ -21,6 +21,9 @@ module.exports = {
       status: {
         type: Sequelize.STRING
       },
+      result:{
+        type: Sequelize.STRING
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -30,7 +33,7 @@ module.exports = {
         type: Sequelize.DATE
       }
     }).then(()=>{
-      queryInterface.addConstraint('Games', ['game_id'], {
+      queryInterface.addConstraint('Games', ['gameId'], {
         type: 'primary key',
         name: 'game_primary_key'
      });
