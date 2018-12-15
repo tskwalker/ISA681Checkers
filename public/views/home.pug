@@ -1,16 +1,12 @@
 html
     head
         title #{title}
-        link(href='https://fonts.googleapis.com/css?family=Lato:400,700', rel='stylesheet')
         link(rel='stylesheet', href='/stylesheets/app.css')
-        link(rel='shortcut icon', href='favicon.ico', type='image/x-icon')
-        link(rel='shortcut icon', href='favicon.png', type='image/x-icon')
-        link(rel='icon', href='favicon.ico', type='image/x-icon')
-        link(rel='icon', href='favicon.png', type='image/x-icon')
         script(src='/socket.io/socket.io.js')
         script(src="/jquery/jquery.js")
         script(src='javascripts/checkersClient.js')
-        script(src='javascripts/checkersValidation.js')
+        script(src="/tabulator/js/tabulator.min.js")
+        link(href="/tabulator/css/tabulator.min.css" rel="stylesheet")
     body
      h1 Welcome #{name}
     
@@ -29,6 +25,7 @@ html
             button#joinGRBtn Join Game Room
             button#moveGBtn Game Moves
             button#gameHistory Game History
+            button#clearTables Hide Stats
 
     p(hidden).waitMsg.
         Waiting for second Player
@@ -47,14 +44,21 @@ html
 
     #completedGames
         .rooms 
-            button(hidden)#cRoomId Get
+            button(hidden)#cRoomId
 
-    #moves_table
+    
+    #stat_table.stat_data
+    br
+    br
+    p(hidden).movesMsg Game Moves
+    #moves_table.moves
 
     #content
         .checkers
             button#startPlayBtn(type="button") StartPlay
             //a(href="/checkersGame")
+
+    #currentMoves
 
     
     .column

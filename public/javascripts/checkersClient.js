@@ -34,27 +34,27 @@ var PlayerMove = {
 }
 var roomList = [];
 var gamesHistory = [];
-
+var selectedGameId;
 //sockets and functions
 
 
 socket.on('newGameRoomCreated', function (data) {
     App.gRoomId = data.gRoomId;
     App.mySocketId = data.mySocketId;
-    
+
     App.numPlayersInRoom = data.numPlayersInRoom;
     App.points = 0;
     console.log('GameRoom created with Id: ' + App.gRoomId + ' and socketId: ' + App.mySocketId + ' with ' + App.numPlayersInRoom + ' Players');
-    //$("#createGRBtn").attr("disabled", "disabled");
+
 
     $(".waitMsg").append(' to join Game Room : ', App.gRoomId);
     $(".waitMsg").show();
     var gRoom = [];
     gRoom[App.gRoomId] = App.numPlayersInRoom;
-    //showGameRooms(gRoom); 
+
     $("#joinGRBtn").prop('disabled', true);
     Game.player1Email = data.player1_id;
-    
+
     window.alert('Welcome, ' + App.pEmail + ' Your game room number is:' + App.gRoomId + ' and you are player 1');
 });
 
@@ -66,12 +66,11 @@ socket.on('gameRoomList', (GameRooms) => {
 
 
 socket.on('startCheckers', (roomInfo) => {
-    console.log(roomInfo);
     
+
     $(".waitMsg").hide();
     $(".playerJoinedMsg").show();
     $(".joinRoomMsg").hide();
-    //window.alert('Welcome, ' + roomInfo.player2_id + ' You have joined game room :' + App.gRoomId + ' and you are player 2');
 
     if (App.pEmail === roomInfo.player1_id) {
         App.playId = 1;
@@ -92,9 +91,7 @@ socket.on('startCheckers', (roomInfo) => {
     Game.roomId = App.gRoomId;
     Game.redTop = 1;
     Game.blueBottom = 2;
-    //Game.roomId = roomInfo.gameId;
     Game.status = roomInfo.status;
-    console.log(Game)
 
 
     //var email = $("#myEmail").append();
@@ -110,48 +107,73 @@ socket.on('startCheckers', (roomInfo) => {
 });
 
 socket.on('gameMoves', (data) => {
-    console.log(data);
+
+
+    $(".movesMsg").show();
+    $("#moves_table").show();
+    var table = new Tabulator("#moves_table", {
+
+        width: "50%",
+        layout: "fitColumns",
+        pagination: "local",
+        paginationSize: 6,
+
+        columns: [
+            { title: "round", field: "moveNum", sorter: "number" },
+            { title: "player", field: "player" },
+            { title: "from", field: "src" },
+            { title: "to", field: "dest" },
+        ],
+
+    });
+    table.setData(data);
 
 })
 
 socket.on("gameHistoryFromServer", (data) => {
-    console.log(data);
+
     gamesHistory = data;
+    $("#stat_table").show();
+    var table = new Tabulator("#stat_table", {
 
-    console.log('history',gamesHistory);
-    $(".selectRoomMsg").show();
-    for (var i in gamesHistory) {
+        width: "50%",
+        layout: "fitColumns",
+        selectable: true,
+        columns: [
+            { title: "Room", field: "gameId", sorter: "number" },
+            { title: "Player1", field: "player1_id", },
+            { title: "Player2", field: "player2_id" },
+            { title: "Winner", field: "result" },
+            { title: "Status", field: "status", visible: false },
 
-        var gId = gamesHistory[i].gameId;
-        $("<input type='radio' name='completeGRbtn' value=" + gId + ">" + gId + "</input><br/>").appendTo("#completedGames");
+        ],
+        rowSelected: function (row) {
+            var selected = row.getData();
+            if (selected) {
 
-    }
-   
+                selectedGameId = selected.gameId;
+                $("#moveGBtn").prop('disabled', false);
+            }
 
+        },
+    });
 
-    //show the roomids of completed games.
-    /**
-     * the data is of format
-     * below
-      {
-      gameId: 44434, 
-      player1_id: "jais.mary@gmail.com", 
-      player2_id: "new.user3@checkers.com", 
-      status: "completed", 
-      result: "jais.mary@gmail.com"
-    } 
-    we need to show this data in data as history.
-    */
-
+    table.setData(gamesHistory);
+    $("#select-row").click(function () {
+        table.selectRow(1);
+    });
 
 })
 //functions
 
 function createGRoom() {
     socket.emit('createGameRoom', { email: App.pEmail });
-    //console.log('emitted createGameRoom', App.pEmail);
+    
     console.log('New game room was created by', App.pEmail);
     console.log('emitted createGameRoom', App.mySocketId);
+    $("#gameHistory").prop('disabled', true);
+    $("#moveGBtn").prop('disabled', true);
+    $("#clearTables").prop('disabled', true);
 
 }
 function joinRoom() {
@@ -164,6 +186,9 @@ function joinRoom() {
     socket.emit('joinGameRoom', content);
     $(".joinRoomMsg").hide();
     $("#roomList").hide();
+    $("#gameHistory").prop('disabled', true);
+    $("#moveGBtn").prop('disabled', true);
+    $("#clearTables").prop('disabled', true);
     console.log('GRoomId sent to Join: ' + $("input:radio:checked").val());
 }
 function checkGameRoomStatus() {
@@ -182,30 +207,21 @@ function showGameRooms(GameRooms) {
             console.log(i + " has " + GameRooms[i] + " player(s)");
             $("<input type='radio' name='radiobtn' value=" + i + ">" + i + "</input><br/>").appendTo("#roomList");
         }
-        // else
-        // $("#createGRBtn").prop('disabled', false);
-
     }
-    console.log(GameRooms);
     const rooms = jQuery.isEmptyObject(GameRooms);
     if (!rooms) {
 
         $("#joinGRBtn").prop('disabled', false);
-        // $("#createGRBtn").prop('disabled', true);
-
     }
 
 }
 
 function getCompletedGameMoves() {
-    var gRoomId = $("input[type='radio'][name='completeGRbtn']:checked").val();
-    console.log(gRoomId);
-    //emit completed game list
-    if(gRoomId)
-        //enable game moves button
 
-   
-    socket.emit('getCompletedGameMoves',{roomId:gRoomId});
+    //emit completed game list
+    if (selectedGameId)
+        console.log('emiting..', selectedGameId);
+    socket.emit('getCompletedGameMoves', { roomId: selectedGameId });
 }
 
 function getGameHistory() {
@@ -215,8 +231,9 @@ function getGameHistory() {
 
 $(function () {
     $("#joinGRBtn").attr("disabled", "disabled");
-    // $("#resumeGBtn").attr("disabled", "disabled");
+    
     $("#startPlayBtn").attr("disabled", "disabled");
+    $("#moveGBtn").attr('disabled', "disabled");
 
     $(".column").hide();
 
@@ -228,9 +245,7 @@ $(function () {
     $("#joinGRBtn").one('click', function () {
         joinRoom();
     });
-    $("#startPlayBtn").one('click', () => {
-        //startCheckers();
-    });
+    
 
     $("#moveGBtn").on('click', () => {
         getCompletedGameMoves();
@@ -241,6 +256,11 @@ $(function () {
         getGameHistory();
     })
 
+    $("#clearTables").on('click', () => {
+        $("#stat_table").hide();
+        $(".movesMsg").hide();
+        $("#moves_table").hide();
+    })
 
     App.pEmail = $("#sEmail").text();
     console.log('Created global email variable: ' + App.pEmail);
@@ -251,7 +271,10 @@ $(function () {
     App.mySocketId = $("#pId").text();
     console.log('Users player ID is ' + App.mySocketId);
 
+/***************************
+ */
 
+ /********************************** */
 
     //checkers board
 
@@ -260,14 +283,14 @@ $(function () {
     // var socket=io();
     //The initial setup
     var gameBoard = [
-      [0, 1, 0, 1, 0, 1, 0, 1],
-      [1, 0, 1, 0, 1, 0, 1, 0],
-      [0, 1, 0, 1, 0, 1, 0, 1],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [2, 0, 2, 0, 2, 0, 2, 0],
-      [0, 2, 0, 2, 0, 2, 0, 2],
-      [2, 0, 2, 0, 2, 0, 2, 0]
+        [0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0, 1, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [2, 0, 2, 0, 2, 0, 2, 0],
+        [0, 2, 0, 2, 0, 2, 0, 2],
+        [2, 0, 2, 0, 2, 0, 2, 0]
     ];
     //arrays to store the instances
     var pieces = [];
@@ -330,7 +353,7 @@ $(function () {
             if (!this.king && (this.position[0] == 0 || this.position[0] == 7))
                 this.makeKing();
             Board.changePlayerTurn();
-            //socket.emit('moveTo', { src: PlayerMove.src, dest: PlayerMove.dest, player: this.player });
+            
             return true;
         };
 
@@ -350,8 +373,7 @@ $(function () {
 
         }
         this.canMakeAnyMove = function () {
-            //console.log('canMakeAnyMove from :', this.position);
-            //do boundary validation
+            
 
             if (this.checkBoundayandValidate(this.position[0] + 1, this.position[1] + 1) ||
                 this.checkBoundayandValidate(this.position[0] + 1, this.position[1] - 1) ||
@@ -368,7 +390,7 @@ $(function () {
 
         //tests if an opponent jump can be made to a specific place
         this.canOpponentJump = function (newPosition) {
-            // console.log('canOpponentJump:', newPosition[0],newPosition[1]);
+            
 
             //find what the displacement is
             var dx = newPosition[1] - this.position[1];
@@ -415,19 +437,19 @@ $(function () {
             if (this.player == 1) {
                 $('#player2').append("<div class='capturedPiece'></div>");
                 Game.totalScore2++;
-                // console.log("Game.totalScore2:", Game.totalScore2)
+                
             }
             if (this.player == 2) {
                 $('#player1').append("<div class='capturedPiece'></div>");
                 Game.totalScore1++;
-                //console.log("Game.totalScore1:", Game.totalScore1);
+                
             }
             Board.board[this.position[0]][this.position[1]] = 0;
             //reset position so it doesn't get picked up by the for loop in the canOpponentJump method
             this.position = [];
 
         }
-      
+
     }
 
 
@@ -542,8 +564,8 @@ $(function () {
 
         }
     }
-  
-  
+
+
     //initialize the board
     Board.initalize();
 
@@ -555,10 +577,10 @@ $(function () {
     $('.piece').on("click", function () {
         var selected;
         var isPlayersTurn = ($(this).parent().attr("class").split(' ')[0] == "player" + Board.playerTurn + "pieces");
-        console.log('isplayerturn', isPlayersTurn);
+        
         if (isPlayersTurn) {
             if (Board.playerTurn === App.playId) {
-                console.log(`${App.pEmail} turn`);
+                
                 if ($(this).hasClass('selected')) selected = true;
                 $('.piece').each(function (index) {
                     $('.piece').eq(index).removeClass('selected')
@@ -634,7 +656,7 @@ $(function () {
 
             var piece = pieces[i];
             if (piece.position != 0 && piece.player == App.playId) {
-                console.log('piece position :', piece);
+                
                 if (piece.canMakeAnyMove()) {
                     return true;
                 }
@@ -666,7 +688,7 @@ $(function () {
             var position = tiles[i].position
             if ((position[0] === dest[0]) && (position[1] === dest[1])) {
                 tile = tiles[i];
-                //console.log(tile);
+                
             }
         }
 
@@ -675,7 +697,7 @@ $(function () {
 
             //check if that was a jump move
             if (jump === true) {
-                //  console.log(piece, tile);
+                
                 var pieceToRemove = piece.canOpponentJump(tile.position);
                 if (pieceToRemove) {
                     pieces[pieceIndex].remove();
@@ -712,8 +734,11 @@ $(function () {
             }
 
             window.alert(`Game stat: winner : ${Game.winner}`);
+            $("#gameHistory").prop('disabled', false);
+            $("#moveGBtn").prop('disabled', false);
+            $("#clearTables").prop('disabled', false);
         } else {
-            console.log('winner check :', pieces);
+            
 
             if (!checkIfAnyMovesLeft()) {
                 if (Game.totalScore1 > Game.totalScore2) winPlayer = 1;
@@ -729,6 +754,9 @@ $(function () {
                 }
 
                 window.alert(`Game stat: winner : ${Game.winner}`);
+                $("#gameHistory").prop('disabled', false);
+                $("#moveGBtn").prop('disabled', false);
+                $("#clearTables").prop('disabled', false);
             } else
                 console.log('Moves Left');
 
@@ -747,6 +775,33 @@ $(function () {
     socket.on('currentGameMoves', (data) => {
         console.log(data);
         // show them in ui.
+        $(".column").hide();
+        
+
+        var table = new Tabulator("#currentMoves", {
+            columnVertAlign:"bottom", //align header contents to bottom of cell
+            columns:[
+            {title:"Name", field:"name", width:160},
+            {//create column group
+                title:"Player 1",
+                columns:[
+                {title:"round", field:"progress", sorter:"number"},
+                {title:"src", field:"rating", align:"center"},
+                {title:"dest", field:"car", align:"center"},
+                ],
+            },
+            {//create column group
+                title:"Player 2",
+                columns:[
+                {title:"round", field:"gender", sorter:"number",},
+                {title:"source", field:"col"},
+                {title:"dest", field:"dob"},
+                ],
+            },
+            ],
+        });
+
+
     })
 
 });
